@@ -423,7 +423,7 @@ function template(vm, ctx) {
 
       ${drillPanel(vm)}
 
-      <footer class="hint" style="line-height: 1.6;">ที่มา: HOSxP — opitemrece, rcpt_debt, rcpt_debt_cancel, rcpt_print_detail, ovst, ipt, pttype · ยอดคำนวณจาก opitemrece.sum_price · รายละเอียดระดับ ${vm.view === "OPD" ? "VN" : "AN"} คลิกที่การ์ดหรือขั้นตอนด้านบน · ป้าย “ตัวอย่าง” = ตัวเลขตามแบบ ยังไม่ได้ดึงจาก HOSxP</footer>`;
+      <footer class="hint" style="line-height: 1.6;">ที่มา: HOSxP — opitemrece, rcpt_debt, rcpt_debt_cancel, rcpt_print_detail, ovst, ipt, pttype · ยอดคำนวณจาก opitemrece.sum_price · รายละเอียดระดับ ${vm.view === "OPD" ? "VN" : "AN"} คลิกที่การ์ดหรือขั้นตอนด้านบน</footer>`;
 
   return `
   <div class="page ${ctx.refreshing ? "refreshing" : ""}">
