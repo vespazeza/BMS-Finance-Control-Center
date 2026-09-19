@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  body { margin: 0; background: #EFEEE9; -webkit-font-smoothing: antialiased; }
+  a { color: #1F3A5F; text-decoration: none; }
+  a:hover { color: #A62B1F; text-decoration: underline; }
+</style>
+</helmet>
+<div style="font-family: 'IBM Plex Sans Thai', system-ui, sans-serif; color: #16181C; padding: 26px clamp(16px, 3vw, 40px) 56px; max-width: 1480px; margin: 0 auto;">
+
+  <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-end; justify-content: space-between; border-bottom: 2px solid #16181C; padding-bottom: 14px;">
+    <div style="min-width: 0;">
+      <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: #6B6F76;">Revenue Integrity · Unbilled Service</div>
+      <h1 style="margin: 4px 0 0; font-size: clamp(26px, 3vw, 38px); font-weight: 700; letter-spacing: -0.02em; line-height: 1.1;">เงินที่ยังไม่ได้เรียกเก็บ</h1>
+      <div style="margin-top: 6px; font-size: 13px; color: #6B6F76;">{{ hospital }} · ข้อมูล ณ {{ stamp }}</div>
+    </div>
+    <div style="display: flex; gap: 6px; padding: 4px; background: #E3E1DA; border: 1px solid #D3D0C7;">
+      <sc-for list="{{ ranges }}" as="r" hint-placeholder-count="3">
+        <button onClick="{{ r.onClick }}" style="font-family: 'IBM Plex Sans Thai', sans-serif; font-size: 13px; font-weight: 600; padding: 8px 16px; border: 0; cursor: pointer; background: {{ r.bg }}; color: {{ r.fg }};">{{ r.label }}</button>
+      </sc-for>
+    </div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1px; background: transparent; margin-top: 22px;">
+    <div onClick="{{ hero.onPending }}" title="คลิกดูรายละเอียด" style="background: #16181C; color: #F7F6F2; border: 1px solid #16181C; cursor: pointer; padding: 24px 26px; display: flex; flex-direction: column; justify-content: space-between; gap: 18px;">
+      <div style="font-size: 13px; font-weight: 600; letter-spacing: 0.04em; color: #B7B2A6;">ยังไม่ออก Invoice — มูลค่ารวม</div>
+      <div>
+        <div style="font-family: 'IBM Plex Mono', monospace; font-size: clamp(38px, 5vw, 60px); font-weight: 600; line-height: 1; letter-spacing: -0.03em; color: #F7B32B;">{{ hero.value }}</div>
+        <div style="margin-top: 8px; font-size: 14px; color: #D8D4C9;">บาท · {{ hero.cases }} ราย ({{ hero.opdCases }} OPD / {{ hero.ipdCases }} IPD)</div>
+      </div>
+    </div>
+    <div onClick="{{ hero.onPartial }}" title="คลิกดูรายละเอียด" style="background: #FBFAF7; border: 1px solid #16181C; cursor: pointer; padding: 24px 26px; display: flex; flex-direction: column; justify-content: space-between; gap: 18px;">
+      <div style="font-size: 13px; font-weight: 600; color: #6B6F76;">Invoice ไม่ครบยอด</div>
+      <div>
+        <div style="font-family: 'IBM Plex Mono', monospace; font-size: clamp(30px, 3.6vw, 44px); font-weight: 600; line-height: 1; letter-spacing: -0.02em; color: #B4540A;">{{ hero.partialValue }}</div>
+        <div style="margin-top: 8px; font-size: 14px; color: #6B6F76;">บาท · {{ hero.partialCases }} ใบ ส่วนต่างที่ยังขาด</div>
+      </div>
+    </div>
+    <div onClick="{{ hero.onVoid }}" title="คลิกดูรายละเอียด" style="background: #FBFAF7; border: 1px solid #16181C; cursor: pointer; padding: 24px 26px; display: flex; flex-direction: column; justify-content: space-between; gap: 18px;">
+      <div style="font-size: 13px; font-weight: 600; color: #6B6F76;">ยกเลิก Invoice (ต้องออกใหม่)</div>
+      <div>
+        <div style="font-family: 'IBM Plex Mono', monospace; font-size: clamp(30px, 3.6vw, 44px); font-weight: 600; line-height: 1; letter-spacing: -0.02em; color: #A62B1F;">{{ hero.voidValue }}</div>
+        <div style="margin-top: 8px; font-size: 14px; color: #6B6F76;">บาท · {{ hero.voidCases }} ใบ</div>
+      </div>
+    </div>
+    <div style="background: #FBFAF7; border: 1px solid #16181C; padding: 24px 26px; display: flex; flex-direction: column; justify-content: space-between; gap: 18px;">
+      <div style="font-size: 13px; font-weight: 600; color: #6B6F76;">อัตราการออก Invoice</div>
+      <div>
+        <div style="font-family: 'IBM Plex Mono', monospace; font-size: clamp(30px, 3.6vw, 44px); font-weight: 600; line-height: 1; letter-spacing: -0.02em; color: #2E6B4F;">{{ hero.rate }}%</div>
+        <div style="margin-top: 8px; font-size: 14px; color: #6B6F76;">ของผู้รับบริการที่มีค่าใช้จ่าย · เป้า 99%</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex; gap: 0; margin-top: 34px; border-bottom: 1px solid #D3D0C7;">
+    <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="2">
+      <button onClick="{{ t.onClick }}" style="font-family: 'IBM Plex Sans Thai', sans-serif; font-size: 15px; font-weight: 600; padding: 11px 22px; border: 0; border-bottom: 3px solid {{ t.underline }}; cursor: pointer; background: transparent; color: {{ t.fg }};">{{ t.label }}</button>
+    </sc-for>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 26px; margin-top: 26px;">
+    <div>
+      <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px;">
+        <h2 style="margin: 0; font-size: 17px; font-weight: 700;">{{ funnelTitle }}</h2>
+        <span style="font-size: 12px; color: #6B6F76;">จำนวนราย · มูลค่า</span>
+      </div>
+      <div style="margin-top: 14px; display: flex; flex-direction: column; gap: 10px;">
+        <sc-for list="{{ funnel }}" as="s" hint-placeholder-count="6">
+          <div onClick="{{ s.onClick }}" style="background: #FBFAF7; border: 1px solid {{ s.border }}; box-shadow: {{ s.shadow }}; padding: 12px 14px; cursor: {{ s.cursor }};">
+            <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px;">
+              <div style="font-size: 14px; font-weight: 600; color: {{ s.ink }};">{{ s.label }}<span style="font-family: 'IBM Plex Sans Thai', sans-serif; font-size: 11px; font-weight: 600; color: #6B6F76; margin-left: 8px;">{{ s.hint }}</span></div>
+              <div style="display: flex; align-items: baseline; gap: 10px; white-space: nowrap;">
+                <span style="font-family: 'IBM Plex Mono', monospace; font-size: 18px; font-weight: 600; color: {{ s.ink }};">{{ s.count }}</span>
+                <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #6B6F76; min-width: 84px; text-align: right;">{{ s.value }}</span>
+              </div>
+            </div>
+            <div style="margin-top: 9px; height: 8px; background: #E3E1DA;">
+              <div style="height: 100%; width: {{ s.pct }}%; background: {{ s.bar }};"></div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 26px;">
+      <div>
+        <h2 style="margin: 0; font-size: 17px; font-weight: 700;">อายุรายการค้างเรียกเก็บ</h2>
+        <div style="margin-top: 14px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; background: #DCDAD3; border: 1px solid #DCDAD3;">
+          <sc-for list="{{ aging }}" as="a" hint-placeholder-count="3">
+            <div style="background: #FBFAF7; padding: 14px;">
+              <div style="font-size: 12px; color: #6B6F76;">{{ a.label }}</div>
+              <div style="font-family: 'IBM Plex Mono', monospace; font-size: 26px; font-weight: 600; margin-top: 6px; color: {{ a.ink }};">{{ a.count }}</div>
+              <div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #6B6F76;">{{ a.value }} ฿</div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      <div>
+        <h2 style="margin: 0; font-size: 17px; font-weight: 700;">{{ deptTitle }}</h2>
+        <table style="width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 13.5px;">
+          <tbody>
+            <sc-for list="{{ depts }}" as="d" hint-placeholder-count="5">
+              <tr style="border-bottom: 1px solid #DCDAD3;">
+                <td style="padding: 9px 0; font-weight: 500;">{{ d.name }}</td>
+                <td style="padding: 9px 0; width: 42%;">
+                  <div style="height: 6px; background: #E3E1DA;"><div style="height: 100%; width: {{ d.pct }}%; background: #1F3A5F;"></div></div>
+                </td>
+                <td style="padding: 9px 0; text-align: right; font-family: 'IBM Plex Mono', monospace; white-space: nowrap;">{{ d.value }}</td>
+                <td style="padding: 9px 0 9px 12px; text-align: right; font-family: 'IBM Plex Mono', monospace; color: #6B6F76; white-space: nowrap;">{{ d.cases }} ราย</td>
+              </tr>
+            </sc-for>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top: 38px;">
+    <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 14px;">
+      <sc-for list="{{ focuses }}" as="f" hint-placeholder-count="3">
+        <button onClick="{{ f.onClick }}" style="font-family: 'IBM Plex Sans Thai', sans-serif; font-size: 13.5px; font-weight: 600; padding: 9px 15px; border: 1px solid {{ f.border }}; cursor: pointer; background: {{ f.bg }}; color: {{ f.fg }}; display: flex; align-items: baseline; gap: 9px;">
+          <span>{{ f.label }}</span>
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; opacity: 0.75;">{{ f.count }} · {{ f.value }} ฿</span>
+        </button>
+      </sc-for>
+    </div>
+    <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: baseline; justify-content: space-between; border-bottom: 2px solid #16181C; padding-bottom: 10px;">
+      <h2 style="margin: 0; font-size: 17px; font-weight: 700;">{{ focusTitle }} — {{ view }} <span style="font-weight: 500; color: #6B6F76;">({{ rowCount }} รายการ)</span></h2>
+      <div style="display: flex; gap: 6px;">
+        <sc-for list="{{ sorts }}" as="s" hint-placeholder-count="2">
+          <button onClick="{{ s.onClick }}" style="font-family: 'IBM Plex Sans Thai', sans-serif; font-size: 12.5px; font-weight: 600; padding: 7px 13px; border: 1px solid #C9C5BA; cursor: pointer; background: {{ s.bg }}; color: {{ s.fg }};">{{ s.label }}</button>
+        </sc-for>
+      </div>
+    </div>
+    <table style="width: 100%; border-collapse: collapse; font-size: 13.5px;">
+      <thead>
+        <tr style="text-align: left; color: #6B6F76; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;">
+          <th style="padding: 10px 10px 10px 0; font-weight: 600;">{{ cols.c1 }}</th>
+          <th style="padding: 10px; font-weight: 600;">ผู้รับบริการ</th>
+          <th style="padding: 10px; font-weight: 600;">{{ cols.c3 }}</th>
+          <th style="padding: 10px; font-weight: 600;">{{ cols.c4 }}</th>
+          <th style="padding: 10px; font-weight: 600; text-align: right;">{{ cols.c5 }}</th>
+          <th style="padding: 10px; font-weight: 600; text-align: right;">{{ cols.c6 }}</th>
+          <th style="padding: 10px 0 10px 10px; font-weight: 600;">{{ cols.c7 }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        <sc-for list="{{ rows }}" as="row" hint-placeholder-count="8">
+          <tr style="border-top: 1px solid #DCDAD3; background: #FBFAF7;">
+            <td style="padding: 11px 10px 11px 0; font-family: 'IBM Plex Mono', monospace; font-weight: 500;">{{ row.id }}</td>
+            <td style="padding: 11px 10px;">{{ row.name }}</td>
+            <td style="padding: 11px 10px; color: #3F444C;">{{ row.unit }}</td>
+            <td style="padding: 11px 10px; font-family: 'IBM Plex Mono', monospace; color: #3F444C;">{{ row.time }}</td>
+            <td style="padding: 11px 10px; text-align: right; font-family: 'IBM Plex Mono', monospace; font-weight: 600; color: {{ row.ageInk }};">{{ row.age }}</td>
+            <td style="padding: 11px 10px; text-align: right; font-family: 'IBM Plex Mono', monospace; font-weight: 600;">{{ row.amount }}</td>
+            <td style="padding: 11px 0 11px 10px;"><span style="display: inline-block; padding: 3px 9px; font-size: 12px; font-weight: 600; background: {{ row.tagBg }}; color: {{ row.tagFg }};">{{ row.reason }}</span></td>
+          </tr>
+        </sc-for>
+      </tbody>
+    </table>
+    <div style="margin-top: 14px; font-size: 12.5px; color: #6B6F76;">แสดง {{ shownCount }} จาก {{ rowCount }} รายการของ{{ rangeLabel }} · เรียงตาม{{ sortLabel }}</div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;hospital&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;โรงพยาบาลศรีนครินทร์เวช&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+const fmt = (n) => n.toLocaleString('en-US');
+
+const DATA = {
+  today: {
+    label: "วันนี้", stamp: "18 ก.ย. 2569 14:32",
+    OPD: { visits: 1250, charged: 1180, invoiced: 1120, pending: 60, pendingValue: 145800, partial: 14, partialValue: 23400, void: 8, voidValue: 11250 },
+    IPD: { admit: 42, discharge: 31, charged: 31, invoiced: 27, pending: 4, pendingValue: 312500, partial: 2, partialValue: 48200, void: 1, voidValue: 26400 }
+  },
+  week: {
+    label: "7 วัน", stamp: "12–18 ก.ย. 2569",
+    OPD: { visits: 8420, charged: 7960, invoiced: 7742, pending: 218, pendingValue: 512300, partial: 61, partialValue: 98700, void: 29, voidValue: 44100 },
+    IPD: { admit: 264, discharge: 241, charged: 241, invoiced: 223, pending: 18, pendingValue: 1284000, partial: 9, partialValue: 187500, void: 4, voidValue: 96300 }
+  },
+  month: {
+    label: "เดือนนี้", stamp: "1–18 ก.ย. 2569",
+    OPD: { visits: 21860, charged: 20510, invoiced: 20012, pending: 498, pendingValue: 1182400, partial: 143, partialValue: 241900, void: 67, voidValue: 103800 },
+    IPD: { admit: 688, discharge: 631, charged: 631, invoiced: 589, pending: 42, pendingValue: 2946000, partial: 21, partialValue: 412700, void: 11, voidValue: 238500 }
+  }
+};
+
+const AGING = {
+  OPD: { today: [[38, 62400], [17, 51200], [5, 32200]], week: [[96, 184300], [78, 201800], [44, 126200]], month: [[188, 402100], [186, 468300], [124, 312000]] },
+  IPD: { today: [[1, 48000], [2, 164500], [1, 100000]], week: [[5, 288000], [8, 612000], [5, 384000]], month: [[12, 684000], [18, 1362000], [12, 900000]] }
+};
+
+const DEPTS = {
+  OPD: [["ห้องฉุกเฉิน (ER)", 18, 41200], ["คลินิกกระดูกและข้อ", 11, 32800], ["ทันตกรรม", 13, 26500], ["คลินิกอายุรกรรม", 9, 24100], ["เวชศาสตร์ฟื้นฟู", 9, 21200]],
+  IPD: [["หอผู้ป่วยศัลยกรรมชาย", 1, 128500], ["หอผู้ป่วย ICU", 1, 96000], ["หอผู้ป่วยสูติกรรม", 1, 52000], ["หอผู้ป่วยกุมารเวช", 1, 36000]]
+};
+
+const ROWS = {
+  OPD: [
+    ["VN 690918-0412", "น.ส. ก. ศรีสุวรรณ", "ห้องฉุกเฉิน (ER)", "02:14", 12.3, 18400, "รอสรุปเวชระเบียน"],
+    ["VN 690918-0388", "นาย บ. ทองอินทร์", "คลินิกกระดูกและข้อ", "08:05", 6.4, 15200, "ยังไม่ลงสิทธิการรักษา"],
+    ["VN 690918-0507", "นาง ค. พิมพ์ใจ", "ทันตกรรม", "09:22", 5.2, 12800, "รอผลแลป/ค่าบริการเพิ่ม"],
+    ["VN 690918-0561", "นาย ง. เจริญผล", "คลินิกอายุรกรรม", "10:41", 3.9, 9600, "ยังไม่ลงสิทธิการรักษา"],
+    ["VN 690918-0603", "นาง จ. แก้วประเสริฐ", "เวชศาสตร์ฟื้นฟู", "11:18", 3.2, 8400, "รอสรุปเวชระเบียน"],
+    ["VN 690918-0644", "นาย ฉ. ภู่ระหงษ์", "ห้องฉุกเฉิน (ER)", "11:55", 2.6, 7900, "ค้างเวชภัณฑ์ยังไม่ตัดจ่าย"],
+    ["VN 690918-0689", "น.ส. ช. วรรณดี", "คลินิกกระดูกและข้อ", "12:30", 2.0, 6300, "รอผลแลป/ค่าบริการเพิ่ม"],
+    ["VN 690918-0721", "นาย ซ. อุดมทรัพย์", "ทันตกรรม", "13:10", 1.4, 5100, "ค้างเวชภัณฑ์ยังไม่ตัดจ่าย"]
+  ],
+  IPD: [
+    ["AN 69-004182", "นาย ญ. สมบูรณ์ศรี", "หอผู้ป่วยศัลยกรรมชาย", "16 ก.ย. 09:40", 52.1, 128500, "รอสรุปค่ารักษาหลัง Discharge"],
+    ["AN 69-004205", "นาง ฎ. บุญมาก", "หอผู้ป่วย ICU", "17 ก.ย. 02:15", 36.3, 96000, "ค้างเวชภัณฑ์ยังไม่ตัดจ่าย"],
+    ["AN 69-004231", "น.ส. ฏ. เรืองวิทย์", "หอผู้ป่วยสูติกรรม", "17 ก.ย. 22:05", 16.5, 52000, "ยังไม่ลงสิทธิการรักษา"],
+    ["AN 69-004240", "ด.ช. ฐ. ปานทอง", "หอผู้ป่วยกุมารเวช", "18 ก.ย. 06:50", 7.7, 36000, "รอสรุปค่ารักษาหลัง Discharge"]
+  ]
+};
+
+const TAG = {
+  "รอสรุปเวชระเบียน": ["#F3E2C7", "#7A4A06"],
+  "ยังไม่ลงสิทธิการรักษา": ["#F6D8D4", "#8C241A"],
+  "รอผลแลป/ค่าบริการเพิ่ม": ["#DDE6EF", "#1F3A5F"],
+  "ค้างเวชภัณฑ์ยังไม่ตัดจ่าย": ["#E2E6DE", "#2E6B4F"],
+  "รอสรุปค่ารักษาหลัง Discharge": ["#F3E2C7", "#7A4A06"]
+};
+
+const PARTIAL = {
+  OPD: [
+    ["INV-OP-690918-0271", "นาย ต. ชัยมงคล", "ห้องฉุกเฉิน (ER)", 21600, 16800, 4800, "เวชภัณฑ์ตัดจ่ายหลังออกใบแจ้งหนี้"],
+    ["INV-OP-690918-0288", "นาง ถ. สุขเกษม", "คลินิกกระดูกและข้อ", 15400, 11500, 3900, "ค่าหัตถการยังไม่ผ่านการคิดค่า"],
+    ["INV-OP-690918-0304", "น.ส. ท. ปิ่นแก้ว", "ทันตกรรม", 9800, 6600, 3200, "ค่าแลปเข้าระบบภายหลัง"],
+    ["INV-OP-690918-0319", "นาย ธ. อินทรโชติ", "คลินิกอายุรกรรม", 12300, 9700, 2600, "ราคาสิทธิต่างจากที่บันทึก"],
+    ["INV-OP-690918-0333", "นาง น. บุญเรือง", "เวชศาสตร์ฟื้นฟู", 7400, 5300, 2100, "ค่าหัตถการยังไม่ผ่านการคิดค่า"],
+    ["INV-OP-690918-0347", "นาย บ. เพ็ญศรี", "ห้องฉุกเฉิน (ER)", 6900, 5100, 1800, "เวชภัณฑ์ตัดจ่ายหลังออกใบแจ้งหนี้"]
+  ],
+  IPD: [
+    ["INV-IP-69-004166", "นาย ป. ธีรวัฒน์", "หอผู้ป่วยศัลยกรรมชาย", 214000, 182300, 31700, "เวชภัณฑ์ตัดจ่ายหลังออกใบแจ้งหนี้"],
+    ["INV-IP-69-004171", "นาง ผ. วงศ์สุวรรณ", "หอผู้ป่วย ICU", 168500, 152000, 16500, "ค่าแลปเข้าระบบภายหลัง"]
+  ]
+};
+
+const VOID = {
+  OPD: [
+    ["INV-OP-690918-0166", "นาย ฝ. ประสงค์ดี", "ห้องฉุกเฉิน (ER)", "13:48", "การเงิน OPD", 2150, "บันทึกสิทธิผิด ต้องออกใหม่"],
+    ["INV-OP-690918-0158", "นาง พ. ศรีทองคำ", "ทันตกรรม", "12:31", "การเงิน OPD", 1900, "คิดค่ารักษาซ้ำ"],
+    ["INV-OP-690918-0149", "นาย ฟ. ขจรเดช", "คลินิกอายุรกรรม", "11:59", "เวชระเบียน", 1750, "แก้ชื่อผู้รับบริการ"],
+    ["INV-OP-690918-0141", "น.ส. ภ. สายทอง", "คลินิกกระดูกและข้อ", "11:12", "การเงิน OPD", 1500, "บันทึกสิทธิผิด ต้องออกใหม่"],
+    ["INV-OP-690918-0133", "นาย ม. รุ่งเรือง", "เวชศาสตร์ฟื้นฟู", "10:40", "การเงิน OPD", 1350, "คิดค่ารักษาซ้ำ"],
+    ["INV-OP-690918-0124", "นาง ย. เกตุแก้ว", "ทันตกรรม", "09:55", "เวชระเบียน", 1100, "แก้ชื่อผู้รับบริการ"],
+    ["INV-OP-690918-0117", "นาย ร. จันทร์ฉาย", "ห้องฉุกเฉิน (ER)", "09:20", "การเงิน OPD", 850, "โอนบิลเป็นผู้ป่วยใน"],
+    ["INV-OP-690918-0108", "นาง ล. พูนสิน", "คลินิกอายุรกรรม", "08:35", "การเงิน OPD", 650, "คิดค่ารักษาซ้ำ"]
+  ],
+  IPD: [
+    ["INV-IP-69-004158", "นาย ว. สถาพร", "หอผู้ป่วยศัลยกรรมชาย", "10:05", "การเงิน IPD", 26400, "บันทึกสิทธิผิด ต้องออกใหม่"]
+  ]
+};
+
+Object.assign(TAG, {
+  "เวชภัณฑ์ตัดจ่ายหลังออกใบแจ้งหนี้": ["#F3E2C7", "#7A4A06"],
+  "ค่าหัตถการยังไม่ผ่านการคิดค่า": ["#DDE6EF", "#1F3A5F"],
+  "ค่าแลปเข้าระบบภายหลัง": ["#DDE6EF", "#1F3A5F"],
+  "ราคาสิทธิต่างจากที่บันทึก": ["#F6D8D4", "#8C241A"],
+  "บันทึกสิทธิผิด ต้องออกใหม่": ["#F6D8D4", "#8C241A"],
+  "คิดค่ารักษาซ้ำ": ["#F3E2C7", "#7A4A06"],
+  "แก้ชื่อผู้รับบริการ": ["#E2E6DE", "#2E6B4F"],
+  "โอนบิลเป็นผู้ป่วยใน": ["#DDE6EF", "#1F3A5F"]
+});
+
+class Component extends DCLogic {
+  state = { range: "today", view: "OPD", sort: "amount", focus: "pending" };
+
+  renderVals() {
+    const { range, view, sort } = this.state;
+    const d = DATA[range];
+    const o = d.OPD, i = d.IPD;
+    const charged = o.charged + i.charged;
+    const invoiced = o.invoiced + i.invoiced;
+
+    const ranges = Object.keys(DATA).map((k) => ({
+      label: DATA[k].label,
+      bg: k === range ? "#16181C" : "transparent",
+      fg: k === range ? "#F7F6F2" : "#3F444C",
+      onClick: () => this.setState({ range: k })
+    }));
+
+    const tabs = ["OPD", "IPD"].map((k) => ({
+      label: k === "OPD" ? "ผู้ป่วยนอก (OPD)" : "ผู้ป่วยใน (IPD)",
+      underline: k === view ? "#16181C" : "transparent",
+      fg: k === view ? "#16181C" : "#6B6F76",
+      onClick: () => this.setState({ view: k })
+    }));
+
+    const AMBER = "#B4540A", RED = "#A62B1F", GREEN = "#2E6B4F", NAVY = "#1F3A5F", INK = "#16181C";
+    const src = view === "OPD" ? o : i;
+    const base = view === "OPD" ? o.visits : i.admit;
+    const steps = view === "OPD"
+      ? [["Visit ทั้งหมด", o.visits, null, INK, "#4A4F58"],
+         ["Visit ที่มีค่าใช้จ่าย", o.charged, null, INK, "#4A4F58"],
+         ["ออก Invoice แล้ว", o.invoiced, null, GREEN, GREEN],
+         ["ยังไม่ออก Invoice", o.pending, o.pendingValue, AMBER, "#F7B32B"],
+         ["Invoice ไม่ครบยอด", o.partial, o.partialValue, AMBER, AMBER],
+         ["ยกเลิก Invoice", o.void, o.voidValue, RED, RED]]
+      : [["Admit", i.admit, null, INK, "#4A4F58"],
+         ["Discharge", i.discharge, null, INK, "#4A4F58"],
+         ["มีค่าใช้จ่าย", i.charged, null, INK, "#4A4F58"],
+         ["ออก Invoice แล้ว", i.invoiced, null, GREEN, GREEN],
+         ["ยังไม่ออก Invoice", i.pending, i.pendingValue, AMBER, "#F7B32B"],
+         ["Invoice ไม่ครบยอด", i.partial, i.partialValue, AMBER, AMBER],
+         ["ยกเลิก Invoice", i.void, i.voidValue, RED, RED]];
+
+    const FOCUS_OF = { "ยังไม่ออก Invoice": "pending", "Invoice ไม่ครบยอด": "partial", "ยกเลิก Invoice": "void" };
+    const funnel = steps.map(([label, count, value, ink, bar]) => {
+      const f = FOCUS_OF[label];
+      const active = f && f === this.state.focus;
+      return {
+        label, ink, bar,
+        count: fmt(count),
+        value: value == null ? "—" : fmt(value) + " ฿",
+        pct: Math.max(1.5, Math.round((count / base) * 100)),
+        hint: f ? "คลิกดูรายละเอียด" : "",
+        cursor: f ? "pointer" : "default",
+        border: active ? "#16181C" : "#DCDAD3",
+        shadow: active ? "inset 0 0 0 1px #16181C" : "none",
+        onClick: f ? () => this.setState({ focus: f, sort: "amount" }) : undefined
+      };
+    });
+
+    const ageLabels = ["น้อยกว่า 4 ชม.", "4–24 ชม.", "มากกว่า 24 ชม."];
+    const ageInks = [GREEN, AMBER, RED];
+    const aging = AGING[view][range].map(([c, v], n) => ({
+      label: ageLabels[n], ink: ageInks[n], count: fmt(c), value: fmt(v)
+    }));
+
+    const deptList = DEPTS[view];
+    const deptMax = Math.max(...deptList.map((x) => x[2]));
+    const depts = deptList.map(([name, cases, value]) => ({
+      name, cases: fmt(cases), value: fmt(value),
+      pct: Math.round((value / deptMax) * 100)
+    }));
+
+    const focus = this.state.focus;
+    const tag = (r) => TAG[r] || ["#E6E4DD", "#3F444C"];
+    const inkOf = (h) => h > 24 ? RED : h > 4 ? AMBER : GREEN;
+
+    let rows, cols, sortOpts;
+    if (focus === "pending") {
+      cols = { c1: view === "OPD" ? "VN" : "AN", c3: view === "OPD" ? "หน่วยบริการ" : "หอผู้ป่วย", c4: view === "OPD" ? "เวลารับบริการ" : "Discharge", c5: "ค้าง (ชม.)", c6: "ยอด (บาท)", c7: "สาเหตุ" };
+      sortOpts = [["amount", "ยอดสูงสุด"], ["age", "ค้างนานสุด"]];
+      rows = ROWS[view].slice()
+        .sort((a, b) => sort === "age" ? b[4] - a[4] : b[5] - a[5])
+        .map((r) => ({
+          id: r[0], name: r[1], unit: r[2], time: r[3],
+          age: r[4].toFixed(1), amount: fmt(r[5]), reason: r[6],
+          ageInk: inkOf(r[4]), tagBg: tag(r[6])[0], tagFg: tag(r[6])[1]
+        }));
+    } else if (focus === "partial") {
+      cols = { c1: "เลขที่ Invoice", c3: view === "OPD" ? "หน่วยบริการ" : "หอผู้ป่วย", c4: "ยอดที่ควรเรียกเก็บ", c5: "ออก Invoice แล้ว", c6: "ส่วนต่างที่ขาด", c7: "สาเหตุ" };
+      sortOpts = [["amount", "ส่วนต่างสูงสุด"], ["age", "ยอดรวมสูงสุด"]];
+      rows = PARTIAL[view].slice()
+        .sort((a, b) => sort === "age" ? b[3] - a[3] : b[5] - a[5])
+        .map((r) => ({
+          id: r[0], name: r[1], unit: r[2], time: fmt(r[3]),
+          age: fmt(r[4]), amount: fmt(r[5]), reason: r[6],
+          ageInk: "#3F444C", tagBg: tag(r[6])[0], tagFg: tag(r[6])[1]
+        }));
+    } else {
+      cols = { c1: "เลขที่ Invoice", c3: view === "OPD" ? "หน่วยบริการ" : "หอผู้ป่วย", c4: "เวลายกเลิก", c5: "ผู้ยกเลิก", c6: "ยอด (บาท)", c7: "เหตุผล" };
+      sortOpts = [["amount", "ยอดสูงสุด"], ["age", "ยกเลิกล่าสุด"]];
+      rows = VOID[view].slice()
+        .sort((a, b) => sort === "age" ? b[4].localeCompare(a[4]) : b[5] - a[5])
+        .map((r) => ({
+          id: r[0], name: r[1], unit: r[2], time: r[3],
+          age: r[4], amount: fmt(r[5]), reason: r[6],
+          ageInk: "#3F444C", tagBg: tag(r[6])[0], tagFg: tag(r[6])[1]
+        }));
+    }
+
+    const sortKeys = sortOpts.map((x) => x[0]);
+    const activeSort = sortKeys.indexOf(sort) >= 0 ? sort : "amount";
+    const sorts = sortOpts.map(([k, label]) => ({
+      label,
+      bg: k === activeSort ? "#16181C" : "#FBFAF7",
+      fg: k === activeSort ? "#F7F6F2" : "#3F444C",
+      onClick: () => this.setState({ sort: k })
+    }));
+
+    const FOCUS_META = [
+      ["pending", "ยังไม่ออก Invoice", src.pending, src.pendingValue, "#F7B32B", "#16181C"],
+      ["partial", "Invoice ไม่ครบยอด", src.partial, src.partialValue, AMBER, "#FFFFFF"],
+      ["void", "ยกเลิก Invoice", src.void, src.voidValue, RED, "#FFFFFF"]
+    ];
+    const focuses = FOCUS_META.map(([k, label, c, v, bg, fg]) => ({
+      label, count: fmt(c), value: fmt(v),
+      bg: k === focus ? bg : "#FBFAF7",
+      fg: k === focus ? fg : "#3F444C",
+      border: k === focus ? bg : "#C9C5BA",
+      onClick: () => this.setState({ focus: k, sort: "amount" })
+    }));
+    const focusTitle = { pending: "รายการค้างเรียกเก็บ", partial: "Invoice ที่เรียกเก็บไม่ครบยอด", void: "Invoice ที่ถูกยกเลิก" }[focus];
+    const focusTotal = { pending: src.pending, partial: src.partial, void: src.void }[focus];
+
+    return {
+      hospital: this.props.hospital ?? "โรงพยาบาลศรีนครินทร์เวช",
+      stamp: d.stamp,
+      ranges, tabs, funnel, aging, depts, rows, sorts, view, cols, focuses, focusTitle,
+      rangeLabel: d.label,
+      sortLabel: (sortOpts.find((x) => x[0] === activeSort) || sortOpts[0])[1],
+      rowCount: fmt(focusTotal),
+      shownCount: fmt(rows.length),
+      funnelTitle: view === "OPD" ? "เส้นทางการเรียกเก็บ — ผู้ป่วยนอก" : "เส้นทางการเรียกเก็บ — ผู้ป่วยใน",
+      deptTitle: view === "OPD" ? "หน่วยบริการที่ค้างเรียกเก็บสูงสุด" : "หอผู้ป่วยที่ค้างเรียกเก็บสูงสุด",
+      idHeader: view === "OPD" ? "VN" : "AN",
+      unitHeader: view === "OPD" ? "หน่วยบริการ" : "หอผู้ป่วย",
+      timeHeader: view === "OPD" ? "เวลารับบริการ" : "Discharge",
+      hero: {
+        value: fmt(o.pendingValue + i.pendingValue),
+        cases: fmt(o.pending + i.pending),
+        opdCases: fmt(o.pending), ipdCases: fmt(i.pending),
+        partialValue: fmt(o.partialValue + i.partialValue),
+        partialCases: fmt(o.partial + i.partial),
+        voidValue: fmt(o.voidValue + i.voidValue),
+        voidCases: fmt(o.void + i.void),
+        rate: ((invoiced / charged) * 100).toFixed(1),
+        onPending: () => this.setState({ focus: "pending", sort: "amount" }),
+        onPartial: () => this.setState({ focus: "partial", sort: "amount" }),
+        onVoid: () => this.setState({ focus: "void", sort: "amount" })
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>
