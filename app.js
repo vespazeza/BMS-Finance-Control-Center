@@ -108,7 +108,13 @@ function todayIso() {
 
 const state = { range: "today", view: "OPD", sort: "amount", focus: "pending", drillOpen: false, customFrom: todayIso(), customTo: todayIso(), theme: initialTheme() };
 
-const bms = { status: "idle", sessionId: null, config: null, userInfo: null, error: null };
+const bms = { status: "idle", sessionId: null, config: null, userInfo: null, error: null, hospitalName: null };
+
+/** Real hospital name from HOSxP's own config takes priority over the BMS session's
+ * generic user_info.location, which falls back further to the demo name. */
+function currentHospitalName() {
+  return bms.hospitalName || (bms.userInfo && bms.userInfo.location) || HOSPITAL_NAME;
+}
 
 const live = { loading: false, error: null, hero: null, funnel: null, depts: null, rows: null, quality: null, ar: null, payers: null, arTransfer: null, trend: null };
 
@@ -254,7 +260,7 @@ function computeViewModel() {
   const focusTotal = { pending: src.pending, partial: src.partial, void: src.void }[focus];
 
   return {
-    hospital: HOSPITAL_NAME,
+    hospital: currentHospitalName(),
     stamp: d.stamp,
     ranges, tabs, funnel, depts, rows, sorts, view, cols, focuses, focusTitle,
     rangeLabel: d.label,
@@ -420,7 +426,7 @@ function computeLiveViewModel() {
   const focusTotal = { pending: num(funnel.pending_cases), partial: num(funnel.partial_cases), void: num(funnel.void_cases) }[focus];
 
   return {
-    hospital: (bms.userInfo && bms.userInfo.location) || HOSPITAL_NAME,
+    hospital: currentHospitalName(),
     stamp: new Date().toLocaleString("th-TH"),
     ranges, tabs, funnel: funnelVm, depts, rows, sorts, view, cols, focuses, focusTitle,
     rangeLabel: rangeTitle(range),
@@ -589,6 +595,17 @@ function setCustomDate(key, value) {
 }
 function closeDrill() { state.drillOpen = false; render(); }
 
+/** Runs on its own, outside the main data batch, so the header shows the real
+ * hospital name as soon as this single lightweight query resolves — not only
+ * after the user triggers a range change that happens to complete first. */
+async function fetchHospitalName() {
+  const res = await window.BmsSession.executeSqlViaApi(window.HosxpQueries.buildHospitalNameQuery(), bms.config);
+  if (res.ok && res.data[0] && res.data[0].hospitalname) {
+    bms.hospitalName = res.data[0].hospitalname;
+    render();
+  }
+}
+
 async function bmsConnect(sessionId) {
   bms.status = "connecting";
   bms.sessionId = sessionId;
@@ -601,6 +618,7 @@ async function bmsConnect(sessionId) {
     bms.config = result.config;
     bms.userInfo = result.userInfo;
     window.BmsSession.setSessionCookie(sessionId);
+    fetchHospitalName();
     refreshLiveData();
   } else {
     bms.status = "error";

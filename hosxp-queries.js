@@ -38,6 +38,13 @@
  *   - A literal `+` is decoded as a space; never use it in SQL.
  */
 
+/** The hospital's own name, as configured in HOSxP itself (opdconfig) — used for the
+ * header instead of the BMS session's user_info.location, which can be a generic
+ * label like "โรงพยาบาลทดสอบ BMS" rather than the real hospital name. */
+function buildHospitalNameQuery() {
+  return "SELECT hospitalname FROM opdconfig LIMIT 1;";
+}
+
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 let customRange = { from: null, to: null };
 
@@ -235,6 +242,7 @@ WHERE c.state='partial' ORDER BY ${orderBy} LIMIT 100;`;
 window.HosxpQueries = {
   setCustomRange,
   dateRangeCond,
+  buildHospitalNameQuery,
   buildHeroPartQuery,
   buildFunnelQuery,
   buildDeptsQuery,
