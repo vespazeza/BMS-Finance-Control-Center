@@ -102,6 +102,7 @@ h1, h2, h3 { font-family: Anuphan, 'IBM Plex Sans Thai', sans-serif; margin: 0; 
 .hdr-hospital { margin-right: auto; }
 .hdr-hospital .name { font-family: Kanit, 'IBM Plex Sans Thai', sans-serif; font-size: 24px; font-weight: 500; color: #F1F5F9; line-height: 1.25; }
 .hdr-hospital .stamp { font-size: 13px; color: var(--hdr-muted); margin-top: 1px; }
+.hdr-hospital .version { font-size: 12px; color: var(--hdr-muted); opacity: 0.8; margin-top: 1px; }
 
 .seg { display: inline-flex; background: var(--hdr-chip); border-radius: 999px; padding: 4px; gap: 3px; }
 .seg button { appearance: none; border: none; background: transparent; color: var(--hdr-muted); font-family: Kanit, 'IBM Plex Sans Thai', sans-serif; font-size: 17px; font-weight: 500; padding: 9px 24px; border-radius: 999px; cursor: pointer; transition: all 0.18s ease; }

@@ -439,7 +439,7 @@ function template(vm, ctx) {
         </div>
       </div>
       <div class="hdr-bar">
-        <div class="hdr-hospital"><div class="name">${vm.hospital}</div><div class="stamp">ข้อมูล ณ ${vm.stamp}</div></div>
+        <div class="hdr-hospital"><div class="name">${vm.hospital}</div><div class="stamp">ข้อมูล ณ ${vm.stamp}</div><div class="version">version 1.1</div></div>
         ${rangeSeg()}
         ${state.range === "custom" ? customRangeInputs() : ""}
         ${themeButton()}
