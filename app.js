@@ -108,12 +108,16 @@ function todayIso() {
 
 const state = { range: "today", view: "OPD", sort: "amount", focus: "pending", drillOpen: false, customFrom: todayIso(), customTo: todayIso(), theme: initialTheme() };
 
-const bms = { status: "idle", sessionId: null, config: null, userInfo: null, error: null, hospitalName: null };
+const bms = { status: "idle", sessionId: null, config: null, userInfo: null, error: null, hospitalName: null, hospitalNameLoading: false };
 
-/** Real hospital name from HOSxP's own config takes priority over the BMS session's
- * generic user_info.location, which falls back further to the demo name. */
+/** Real hospital name from HOSxP's own config (opdconfig) for the connected session.
+ * The hardcoded demo name is only for when there is no session at all, so a connected
+ * hospital never briefly shows another hospital's name while the query is in flight. */
 function currentHospitalName() {
-  return bms.hospitalName || (bms.userInfo && bms.userInfo.location) || HOSPITAL_NAME;
+  if (bms.hospitalName) return bms.hospitalName;
+  if (bms.status === "idle" || bms.status === "error") return HOSPITAL_NAME;
+  if (bms.hospitalNameLoading) return "กำลังโหลดชื่อโรงพยาบาล…";
+  return (bms.userInfo && bms.userInfo.location) || "";
 }
 
 const live = { loading: false, error: null, hero: null, funnel: null, depts: null, rows: null, quality: null, ar: null, payers: null, arTransfer: null, trend: null };
@@ -599,9 +603,11 @@ function closeDrill() { state.drillOpen = false; render(); }
  * hospital name as soon as this single lightweight query resolves — not only
  * after the user triggers a range change that happens to complete first. */
 async function fetchHospitalName() {
-  const res = await window.BmsSession.executeSqlViaApi(window.HosxpQueries.buildHospitalNameQuery(), bms.config);
-  if (res.ok && res.data[0] && res.data[0].hospitalname) {
-    bms.hospitalName = res.data[0].hospitalname;
+  try {
+    const res = await window.BmsSession.executeSqlViaApi(window.HosxpQueries.buildHospitalNameQuery(), bms.config);
+    if (res.ok && res.data[0] && res.data[0].hospitalname) bms.hospitalName = res.data[0].hospitalname;
+  } finally {
+    bms.hospitalNameLoading = false;
     render();
   }
 }
@@ -610,6 +616,8 @@ async function bmsConnect(sessionId) {
   bms.status = "connecting";
   bms.sessionId = sessionId;
   bms.error = null;
+  bms.hospitalName = null;
+  bms.hospitalNameLoading = true;
   render();
 
   const result = await window.BmsSession.connectSession(sessionId);
@@ -623,6 +631,7 @@ async function bmsConnect(sessionId) {
   } else {
     bms.status = "error";
     bms.error = result.message;
+    bms.hospitalNameLoading = false;
   }
   render();
 }
