@@ -429,7 +429,7 @@ function template(vm, ctx) {
 
       ${drillPanel(vm)}
 
-      <footer class="hint" style="line-height: 1.6;">ที่มา: HOSxP — opitemrece, rcpt_debt, rcpt_debt_cancel, rcpt_print_detail, ovst, ipt, pttype · ยอดคำนวณจาก opitemrece.sum_price · รายละเอียดระดับ ${vm.view === "OPD" ? "VN" : "AN"} คลิกที่การ์ดหรือขั้นตอนด้านบน</footer>`;
+      <footer class="hint" style="line-height: 1.6;">ที่มา: HOSxP</footer>`;
 
   return `
   <div class="page ${ctx.refreshing ? "refreshing" : ""}">
@@ -439,14 +439,14 @@ function template(vm, ctx) {
         <div class="banner-text">
           <div>
             <div class="kicker">BMS Finance Control Center</div>
-            <h1>Unbilled Service${ctx.demo ? `<span class="demo-tag" title="${ctx.bmsError ? "เชื่อมต่อ HOSxP ไม่สำเร็จ: " + ctx.bmsError : "ยังไม่ได้เชื่อมต่อ HOSxP"}">ข้อมูลตัวอย่าง</span>` : ""}</h1>
+            <h1>Unbilled Service${ctx.demo ? `<span class="demo-tag" title="${ctx.bmsError ? "เชื่อมต่อ HOSxP ไม่สำเร็จ: " + ctx.bmsError : "ยังไม่ได้เชื่อมต่อ HOSxP"}">ยังไม่ได้เชื่อมต่อ</span>` : ""}</h1>
             ${ctx.bmsError ? `<div class="bms-error">เชื่อมต่อ HOSxP ไม่สำเร็จ: ${ctx.bmsError}</div>` : ""}
             <div class="sub">ให้บริการแล้ว แต่ยังไม่ได้เรียกเก็บเงินกี่บาท?</div>
           </div>
         </div>
       </div>
       <div class="hdr-bar">
-        <div class="hdr-hospital"><div class="name">${vm.hospital}</div><div class="stamp">ข้อมูล ณ ${vm.stamp}</div><div class="version">version 1.1</div></div>
+        <div class="hdr-hospital"><div class="name">${vm.hospital}</div>${ctx.skeleton ? "" : `<div class="stamp">ข้อมูล ณ ${vm.stamp}</div>`}<div class="version">version 1.2</div></div>
         ${ctx.refreshing ? processingNote() : ""}
         ${rangeSeg()}
         ${state.range === "custom" ? customRangeInputs() : ""}

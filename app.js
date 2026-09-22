@@ -573,8 +573,13 @@ function render() {
   const app = document.getElementById("app");
   const liveReady = bms.status === "connected" && !!live.hero;
   const vm = liveReady ? computeLiveViewModel() : computeViewModel();
-  const skeleton = !liveReady && (bms.status === "connecting" || (bms.status === "connected" && !live.error));
-  app.innerHTML = template(vm, { demo: !liveReady, skeleton, refreshing: !!live.loading && !!live.hero, bmsError: bms.status === "error" ? bms.error : null });
+  // Every non-live state (no session, still connecting, or connected but the query
+  // itself failed) shows empty placeholder boxes rather than the sample-data
+  // fixture — real-looking numbers before a real connection is established have
+  // caused confusion (mistaken for the connected hospital's actual figures).
+  const skeleton = !liveReady;
+  const bmsError = bms.status === "error" ? bms.error : (bms.status === "connected" && live.error ? live.error : null);
+  app.innerHTML = template(vm, { demo: !liveReady, skeleton, refreshing: !!live.loading && !!live.hero, bmsError });
 }
 
 function setRange(k) { state.range = k; render(); refreshLiveData(); }
