@@ -1,6 +1,6 @@
 "use strict";
 
-const HOSPITAL_NAME = "โรงพยาบาลศรีนครินทร์เวช";
+const HOSPITAL_NOT_CONNECTED = "ยังไม่ได้เชื่อมต่อฐานข้อมูล";
 const fmt = (n) => n.toLocaleString('en-US');
 
 const DATA = {
@@ -111,11 +111,12 @@ const state = { range: "today", view: "OPD", sort: "amount", focus: "pending", d
 const bms = { status: "idle", sessionId: null, config: null, userInfo: null, error: null, hospitalName: null, hospitalNameLoading: false };
 
 /** Real hospital name from HOSxP's own config (opdconfig) for the connected session.
- * The hardcoded demo name is only for when there is no session at all, so a connected
- * hospital never briefly shows another hospital's name while the query is in flight. */
+ * With no session at all (or one that failed), this says so plainly rather than
+ * naming any particular hospital — showing a fixed hospital name here has caused
+ * confusion before (it read as the connected hospital's real name). */
 function currentHospitalName() {
   if (bms.hospitalName) return bms.hospitalName;
-  if (bms.status === "idle" || bms.status === "error") return HOSPITAL_NAME;
+  if (bms.status === "idle" || bms.status === "error") return HOSPITAL_NOT_CONNECTED;
   if (bms.hospitalNameLoading) return "กำลังโหลดชื่อโรงพยาบาล…";
   return (bms.userInfo && bms.userInfo.location) || "";
 }
