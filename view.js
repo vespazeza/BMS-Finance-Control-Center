@@ -429,7 +429,7 @@ function template(vm, ctx) {
 
       ${drillPanel(vm)}
 
-      <footer class="hint" style="line-height: 1.6;">ที่มา: HOSxP</footer>`;
+      <footer class="hint" style="line-height: 1.6;">ที่มา: HOSxP — ${vm.hospital}</footer>`;
 
   return `
   <div class="page ${ctx.refreshing ? "refreshing" : ""}">
