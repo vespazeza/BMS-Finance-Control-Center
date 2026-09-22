@@ -19,6 +19,12 @@ function rangeSeg() {
   return `<div class="seg">${Object.keys(RANGE_LABELS).map(k => `<button class="${k === state.range ? "on" : ""}" onclick="setRange('${k}')">${RANGE_LABELS[k]}</button>`).join("")}</div>`;
 }
 
+const ICON_SPINNER = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" class="spin"><path d="M12 2a10 10 0 0 1 10 10"/></svg>`;
+
+function processingNote() {
+  return `<div class="processing-note">${ICON_SPINNER}<span>กำลังประมวลผลข้อมูล…</span></div>`;
+}
+
 // Native <input type=date> follows the browser locale (month/day/year, Gregorian), so the
 // custom range uses day / month / Buddhist-year selects instead.
 function dateSelects(key) {
@@ -441,6 +447,7 @@ function template(vm, ctx) {
       </div>
       <div class="hdr-bar">
         <div class="hdr-hospital"><div class="name">${vm.hospital}</div><div class="stamp">ข้อมูล ณ ${vm.stamp}</div><div class="version">version 1.1</div></div>
+        ${ctx.refreshing ? processingNote() : ""}
         ${rangeSeg()}
         ${state.range === "custom" ? customRangeInputs() : ""}
         ${themeButton()}
