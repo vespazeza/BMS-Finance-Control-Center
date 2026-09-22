@@ -112,9 +112,24 @@ h1, h2, h3 { font-family: Anuphan, 'IBM Plex Sans Thai', sans-serif; margin: 0; 
 .seg button:hover { color: var(--hdr-text); }
 .seg button.on { background: #F8FAFC; color: #0F172A; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25); }
 
-.datesel { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 6px; font-size: 15px; color: var(--hdr-muted); }
-.datesel select { background: var(--hdr-chip); color: var(--hdr-text); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 8px; padding: 8px 8px; font-family: inherit; font-size: 15px; }
-.datesel select option { color: #0F172A; }
+.datesel { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 8px; font-size: 15px; color: var(--hdr-muted); }
+
+.cal-field { position: relative; }
+.cal-trigger { appearance: none; display: inline-flex; align-items: center; gap: 7px; background: var(--hdr-chip); color: var(--hdr-text); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 10px; padding: 9px 14px; font-family: inherit; font-size: 15px; cursor: pointer; transition: background 0.15s ease; }
+.cal-trigger:hover, .cal-trigger.open { background: rgba(255, 255, 255, 0.16); }
+.cal-trigger .cal-field-lbl { font-size: 12px; color: var(--hdr-muted); }
+.cal-backdrop { position: fixed; inset: 0; z-index: 65; background: transparent; }
+.cal-pop { position: absolute; top: calc(100% + 8px); left: 0; z-index: 70; width: 248px; background: var(--card); color: var(--ink); border: 1px solid var(--border); border-radius: 14px; box-shadow: var(--shadow-hover); padding: 12px; }
+.cal-hd { display: flex; align-items: center; justify-content: space-between; font-size: 13.5px; font-weight: 600; margin-bottom: 8px; }
+.cal-nav { appearance: none; border: none; background: var(--soft); color: var(--ink); width: 26px; height: 26px; border-radius: 8px; cursor: pointer; font-size: 15px; line-height: 1; display: inline-flex; align-items: center; justify-content: center; }
+.cal-nav:hover { background: var(--track); }
+.cal-dow { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-size: 10.5px; color: var(--muted2); margin-bottom: 4px; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+.cal-day { appearance: none; border: none; background: transparent; color: var(--text2); width: 30px; height: 30px; border-radius: 8px; font-size: 12.5px; font-variant-numeric: tabular-nums; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+.cal-day:hover { background: var(--soft); }
+.cal-day.muted { color: var(--muted2); opacity: 0.4; cursor: default; }
+.cal-day.today { font-weight: 700; box-shadow: inset 0 0 0 1px var(--primary); }
+.cal-day.sel { background: var(--primary); color: #fff; font-weight: 600; }
 
 .iconbtn { appearance: none; border: 1px solid rgba(255, 255, 255, 0.14); background: var(--hdr-chip); color: var(--hdr-text); width: 44px; height: 44px; border-radius: 999px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: transform 0.2s ease, background 0.2s ease; }
 .iconbtn:hover { transform: rotate(18deg) scale(1.06); background: rgba(255, 255, 255, 0.16); }
@@ -139,6 +154,7 @@ h1, h2, h3 { font-family: Anuphan, 'IBM Plex Sans Thai', sans-serif; margin: 0; 
 .kpi.hero .lbl, .kpi.hero .note, .kpi.hero .unit { color: var(--hdr-muted); }
 .kpi.hero .val { color: #F8FAFC; }
 .kpi .spark { position: absolute; right: 16px; bottom: 14px; }
+.kpi-hint { font-size: 12px; font-weight: 500; margin-top: 2px; }
 .meter { height: 8px; background: var(--track); border-radius: 99px; overflow: hidden; margin-top: 4px; }
 .meter > i { display: block; height: 100%; border-radius: 99px; background: var(--tone); }
 

@@ -106,7 +106,7 @@ function todayIso() {
   return new Date().toLocaleDateString("sv-SE");
 }
 
-const state = { range: "today", view: "OPD", sort: "amount", focus: "pending", drillOpen: false, customFrom: todayIso(), customTo: todayIso(), theme: initialTheme() };
+const state = { range: "today", view: "OPD", sort: "amount", focus: "pending", drillOpen: false, customFrom: todayIso(), customTo: todayIso(), theme: initialTheme(), calOpen: null, calView: {} };
 
 const bms = { status: "idle", sessionId: null, config: null, userInfo: null, error: null, hospitalName: null, hospitalNameLoading: false };
 
@@ -590,12 +590,6 @@ function scrollToDrill() {
   const el = document.getElementById("drill-panel");
   if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
 }
-function setCustomPart(key, part, value) {
-  let [y, m, d] = state[key].split("-").map(Number);
-  if (part === "y") y = Number(value); else if (part === "m") m = Number(value); else d = Number(value);
-  d = Math.min(d, new Date(y, m, 0).getDate());
-  setCustomDate(key, y + "-" + String(m).padStart(2, "0") + "-" + String(d).padStart(2, "0"));
-}
 function setCustomDate(key, value) {
   if (!value) return;
   state[key] = value;
@@ -604,6 +598,29 @@ function setCustomDate(key, value) {
   refreshLiveData();
 }
 function closeDrill() { state.drillOpen = false; render(); }
+
+/* ---------- custom-range calendar popover ---------- */
+
+function toggleCal(key) {
+  state.calOpen = state.calOpen === key ? null : key;
+  if (state.calOpen && !state.calView[key]) state.calView[key] = state[key].slice(0, 7);
+  render();
+}
+function closeCal() {
+  if (!state.calOpen) return;
+  state.calOpen = null;
+  render();
+}
+function navCal(key, delta) {
+  const [y, m] = (state.calView[key] || state[key].slice(0, 7)).split("-").map(Number);
+  const d = new Date(y, m - 1 + delta, 1);
+  state.calView[key] = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
+  render();
+}
+function pickCal(key, iso) {
+  state.calOpen = null;
+  setCustomDate(key, iso);
+}
 
 /** Runs on its own, outside the main data batch, so the header shows the real
  * hospital name as soon as this single lightweight query resolves — not only
@@ -655,8 +672,10 @@ window.setSort = setSort;
 window.setFocus = setFocus;
 window.closeDrill = closeDrill;
 window.setCustomDate = setCustomDate;
-window.setCustomPart = setCustomPart;
 window.toggleTheme = toggleTheme;
-window.setCustomPart = setCustomPart;
+window.toggleCal = toggleCal;
+window.closeCal = closeCal;
+window.navCal = navCal;
+window.pickCal = pickCal;
 applyTheme();
 if (!initBmsSession()) render();

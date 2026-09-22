@@ -25,21 +25,57 @@ function processingNote() {
   return `<div class="processing-note">${ICON_SPINNER}<span>กำลังประมวลผลข้อมูล…</span></div>`;
 }
 
-// Native <input type=date> follows the browser locale (month/day/year, Gregorian), so the
-// custom range uses day / month / Buddhist-year selects instead.
-function dateSelects(key) {
-  const [y, m, d] = state[key].split("-").map(Number);
-  const nowY = new Date().getFullYear();
-  const opts = (items, cur) => items.map(([v, label]) => `<option value="${v}" ${v === cur ? "selected" : ""}>${label}</option>`).join("");
-  const days = Array.from({ length: new Date(y, m, 0).getDate() }, (_, i) => [i + 1, String(i + 1)]);
-  const months = TH_MONTHS.map((label, i) => [i + 1, label]);
-  const years = Array.from({ length: 6 }, (_, i) => nowY - 5 + i).map(v => [v, String(v + 543)]);
-  const sel = (part, items, cur) => `<select onchange="setCustomPart('${key}', '${part}', this.value)">${opts(items, cur)}</select>`;
-  return sel("d", days, d) + sel("m", months, m) + sel("y", years, y);
+// Native <input type=date> follows the browser locale (month/day/year, Gregorian) — a
+// small custom calendar instead keeps the Buddhist year and stays consistent everywhere.
+const DOW_TH = ["อา", "จ", "อ", "พ", "พฤ", "ศ", "ส"];
+
+function thaiShortDate(iso) {
+  const [y, m, d] = iso.split("-").map(Number);
+  return String(d).padStart(2, "0") + "/" + String(m).padStart(2, "0") + "/" + (y + 543);
+}
+
+function calendarPopover(key) {
+  const view = state.calView[key] || state[key].slice(0, 7);
+  const [vy, vm] = view.split("-").map(Number);
+  const daysInMonth = new Date(vy, vm, 0).getDate();
+  const startDow = new Date(vy, vm - 1, 1).getDay();
+  const prevDays = new Date(vy, vm - 1, 0).getDate();
+  const selected = state[key], todayS = todayIso();
+
+  const cells = [];
+  for (let i = 0; i < startDow; i++) cells.push({ n: prevDays - startDow + 1 + i, iso: null });
+  for (let d = 1; d <= daysInMonth; d++) cells.push({ n: d, iso: `${vy}-${String(vm).padStart(2, "0")}-${String(d).padStart(2, "0")}` });
+  while (cells.length % 7 !== 0) cells.push({ n: null, iso: null });
+
+  const cellsHtml = cells.map(c => {
+    if (!c.iso) return `<span class="cal-day muted">${c.n || ""}</span>`;
+    const cls = ["cal-day"];
+    if (c.iso === selected) cls.push("sel");
+    if (c.iso === todayS) cls.push("today");
+    return `<button type="button" class="${cls.join(" ")}" onclick="pickCal('${key}','${c.iso}')">${c.n}</button>`;
+  }).join("");
+
+  return `
+      <div class="cal-pop" onclick="event.stopPropagation()">
+        <div class="cal-hd">
+          <button type="button" class="cal-nav" onclick="navCal('${key}',-1)" aria-label="เดือนก่อนหน้า">‹</button>
+          <span>${TH_MONTHS[vm - 1]} ${vy + 543}</span>
+          <button type="button" class="cal-nav" onclick="navCal('${key}',1)" aria-label="เดือนถัดไป">›</button>
+        </div>
+        <div class="cal-dow">${DOW_TH.map(d => `<span>${d}</span>`).join("")}</div>
+        <div class="cal-grid">${cellsHtml}</div>
+      </div>`;
 }
 
 function customRangeInputs() {
-  return `<div class="datesel">จาก ${dateSelects("customFrom")} ถึง ${dateSelects("customTo")}</div>`;
+  const field = (key, label) => `
+      <div class="cal-field">
+        <button type="button" class="cal-trigger ${state.calOpen === key ? "open" : ""}" onclick="toggleCal('${key}')">
+          <span class="cal-field-lbl">${label}</span>${thaiShortDate(state[key])}
+        </button>
+        ${state.calOpen === key ? calendarPopover(key) : ""}
+      </div>`;
+  return `<div class="datesel">${field("customFrom", "จาก")}${field("customTo", "ถึง")}</div>`;
 }
 
 function themeButton() {
@@ -59,6 +95,7 @@ function kpi({ label, value, note, tone, onclick, hero, meter, spark }) {
       </div>
       ${meter ? `<div class="meter"><i style="width: ${Math.min(100, Number(value) || 0)}%"></i></div>` : ""}
       <div class="note">${note}</div>
+      ${onclick ? `<div class="kpi-hint" style="color: ${TONE[tone]};">คลิกดูรายการ →</div>` : ""}
       ${spark ? `<div class="spark">${spark}</div>` : ""}
     </div>`;
 }
@@ -352,7 +389,7 @@ function drillPanel(vm) {
             <div>
               <div style="font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); font-weight: 600;">Drill-down · ${vm.view === "OPD" ? "HN → VN" : "HN → AN"} → หน่วยบริการ → จำนวนเงิน</div>
               <h3 style="font-size: 19px; font-weight: 600; margin-top: 4px;">${vm.focusTitle} — ${vm.view}</h3>
-              <div style="font-size: 12.5px; color: var(--hdr-muted); margin-top: 3px;">ช่วงข้อมูล: ${vm.rangeLabel} · ที่มา HOSxP: opitemrece, rcpt_debt, ${vm.view === "OPD" ? "ovst" : "ipt"}</div>
+              <div style="font-size: 12.5px; color: var(--hdr-muted); margin-top: 3px;">ช่วงข้อมูล: ${vm.rangeLabel} · ${vm.hospital}</div>
             </div>
             <button class="chipbtn" onclick="closeDrill()">ปิด</button>
           </div>
@@ -381,16 +418,68 @@ function drillPanel(vm) {
       </section>`;
 }
 
-/* ---------- skeleton (first load) ---------- */
+/* ---------- skeleton (no live numbers yet — still connecting, or no session at all) ---------- */
+
+// Box titles are fixed text, not query results, so they're safe to show even
+// with nothing connected — only the numbers underneath are placeholders.
+const SK_KPIS = [
+  ["ยังไม่ออก Invoice — มูลค่ารวม", "จำนวนราย (OPD/IPD)"],
+  ["Invoice ไม่ครบยอด — ส่วนต่างที่ยังขาด", "จำนวนใบ"],
+  ["ยกเลิก Invoice (ต้องออกใหม่)", "จำนวนใบ"],
+  ["อัตราการออก Invoice", "ของผู้รับบริการที่มีค่าใช้จ่าย · เป้า 99%"]
+];
+const SK_FUNNEL = {
+  OPD: ["Visit ทั้งหมด", "Visit ที่มีค่าใช้จ่าย", "ออก Invoice แล้ว", "ยังไม่ออก Invoice", "Invoice ไม่ครบยอด", "ยกเลิก Invoice"],
+  IPD: ["Admit", "Discharge", "มีค่าใช้จ่าย", "ออก Invoice แล้ว", "ยังไม่ออก Invoice", "Invoice ไม่ครบยอด", "ยกเลิก Invoice"]
+};
+const SK_MINI = ["ลูกหนี้แยกตามอายุหนี้", "สิทธิรักษามียอดค่าใช้จ่ายสูงสุด", "ข้อมูลที่ต้องแก้ก่อนปิดบัญชี"];
 
 function skeleton() {
   const block = (h, w) => `<div class="sk" style="height: ${h}px; ${w ? `width: ${w};` : ""}"></div>`;
-  const kpiSk = `<div class="card" style="display: flex; flex-direction: column; gap: 12px; padding: 20px;">${block(12, "55%")}${block(38, "70%")}${block(12, "45%")}</div>`;
+  const kpiSk = ([label, note]) => `
+        <div class="kpi" style="--tone: var(--muted2);">
+          <div class="lbl">${label}</div>
+          ${block(34, "55%")}
+          <div class="note">${note}</div>
+        </div>`;
+  const fcardSk = (label) => `
+        <div class="fcard">
+          <div style="font-size: 12.5px; font-weight: 600;">${label}</div>
+          ${block(26, "45%")}
+          ${block(8)}
+        </div>`;
+  const miniSk = (label) => `
+        <div class="card" style="padding: 16px 18px 16px;">
+          <div style="font-size: 13px; color: var(--muted); margin-bottom: 10px; font-weight: 500;">${label}</div>
+          ${block(90)}
+        </div>`;
+  const deptLabel = state.view === "IPD" ? "หอผู้ป่วยที่ค้างเรียกเก็บสูงสุด" : "หน่วยบริการที่ค้างเรียกเก็บสูงสุด";
+
   return `
-      <section class="kpis">${kpiSk}${kpiSk}${kpiSk}${kpiSk}</section>
-      <section class="card" style="display: flex; flex-direction: column; gap: 14px;">${block(14, "220px")}${block(230)}</section>
-      <section class="fgrid">${[1, 2, 3, 4, 5, 6].map(() => `<div class="fcard">${block(12, "60%")}${block(26, "40%")}${block(8)}</div>`).join("")}</section>
-      <section class="split"><div class="card" style="display: flex; flex-direction: column; gap: 16px;">${block(14, "200px")}${block(30)}${block(30)}${block(30)}</div><div class="card" style="display: flex; flex-direction: column; gap: 14px;">${block(14, "200px")}${block(56)}${block(56)}</div></section>`;
+      <section class="kpis">${SK_KPIS.map(kpiSk).join("")}</section>
+      <section class="card" style="display: flex; flex-direction: column; gap: 14px;">
+        <h2>แนวโน้มรายวัน</h2>
+        ${block(230)}
+      </section>
+      <section>
+        <h2 style="font-size: 16px; font-weight: 600; margin-bottom: 12px;">ลำดับการเรียกเก็บ</h2>
+        <div class="fgrid">${SK_FUNNEL[state.view === "IPD" ? "IPD" : "OPD"].map(fcardSk).join("")}</div>
+      </section>
+      <section class="split">
+        <div class="card" style="display: flex; flex-direction: column; gap: 16px;">
+          <h2>เงินไหลไปถึงขั้นไหนแล้ว</h2>
+          ${block(30)}${block(30)}${block(30)}
+        </div>
+        <div class="card" style="display: flex; flex-direction: column; gap: 14px;">
+          <h2>สิ่งที่ต้องสั่งการวันนี้</h2>
+          ${block(56)}${block(56)}
+        </div>
+      </section>
+      <section class="cards4">${SK_MINI.map(miniSk).join("")}</section>
+      <section class="card">
+        <h2 style="margin-bottom: 12px;">${deptLabel}</h2>
+        ${block(120)}
+      </section>`;
 }
 
 /* ---------- page ---------- */
@@ -434,6 +523,7 @@ function template(vm, ctx) {
   return `
   <div class="page ${ctx.refreshing ? "refreshing" : ""}">
     ${ctx.refreshing ? `<div class="topbar"></div>` : ""}
+    ${state.calOpen ? `<div class="cal-backdrop" onclick="closeCal()"></div>` : ""}
     <header class="hdr">
       <div class="banner">
         <div class="banner-text">
