@@ -433,7 +433,8 @@ function template(vm, ctx) {
         <div class="banner-text">
           <div>
             <div class="kicker">BMS Finance Control Center</div>
-            <h1>Unbilled Service${ctx.demo ? `<span class="demo-tag" title="ยังไม่ได้เชื่อมต่อ HOSxP">ข้อมูลตัวอย่าง</span>` : ""}</h1>
+            <h1>Unbilled Service${ctx.demo ? `<span class="demo-tag" title="${ctx.bmsError ? "เชื่อมต่อ HOSxP ไม่สำเร็จ: " + ctx.bmsError : "ยังไม่ได้เชื่อมต่อ HOSxP"}">ข้อมูลตัวอย่าง</span>` : ""}</h1>
+            ${ctx.bmsError ? `<div class="bms-error">เชื่อมต่อ HOSxP ไม่สำเร็จ: ${ctx.bmsError}</div>` : ""}
             <div class="sub">ให้บริการแล้ว แต่ยังไม่ได้เรียกเก็บเงินกี่บาท?</div>
           </div>
         </div>

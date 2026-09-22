@@ -573,7 +573,7 @@ function render() {
   const liveReady = bms.status === "connected" && !!live.hero;
   const vm = liveReady ? computeLiveViewModel() : computeViewModel();
   const skeleton = !liveReady && (bms.status === "connecting" || (bms.status === "connected" && !live.error));
-  app.innerHTML = template(vm, { demo: !liveReady, skeleton, refreshing: !!live.loading && !!live.hero });
+  app.innerHTML = template(vm, { demo: !liveReady, skeleton, refreshing: !!live.loading && !!live.hero, bmsError: bms.status === "error" ? bms.error : null });
 }
 
 function setRange(k) { state.range = k; render(); refreshLiveData(); }
