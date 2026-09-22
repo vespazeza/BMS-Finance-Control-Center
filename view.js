@@ -502,32 +502,75 @@ function skeleton() {
       </section>`;
 }
 
-/* ---------- login (no session at all, or the last session failed) ---------- */
+/* ---------- login (no session at all, or the last session failed) ----------
+ * A dedicated full-page split layout — no banner, no range controls — shown
+ * only when there is truly no BMS session to try. Launching through the
+ * marketplace's "เปิดแอป" button never reaches this (see render() in app.js). */
+
+const ICON_SHIELD = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z"/></svg>`;
+const ICON_KEY = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="15" r="4"/><path d="M10.6 12.4 19 4m0 0h-4m4 0v4M15 8l2 2"/></svg>`;
+
+function loginBrandPreview() {
+  const bars = [38, 62, 45, 78, 55, 90, 70];
+  return `
+        <div class="login-mock">
+          <div class="login-mock-dots"><span></span><span></span><span></span></div>
+          <div class="login-mock-chips">
+            <span class="login-mock-chip" style="--c: var(--red);">ยังไม่ออก Invoice</span>
+            <span class="login-mock-chip" style="--c: var(--amber);">Invoice ไม่ครบยอด</span>
+            <span class="login-mock-chip" style="--c: var(--teal);">ออกแล้ว</span>
+          </div>
+          <div class="login-mock-bars">${bars.map(h => `<i style="height:${h}%"></i>`).join("")}</div>
+        </div>`;
+}
 
 function loginScreen(ctx) {
   return `
-      <section class="card login-card">
-        <h2>เข้าสู่ระบบด้วย Session ID</h2>
-        <div class="hint">วาง Session ID ที่ได้จาก BMS Marketplace เพื่อเชื่อมต่อกับฐานข้อมูล HOSxP ของโรงพยาบาลคุณ</div>
+  <div class="login-page">
+    <div class="login-brand">
+      <div class="login-brand-top">
+        <span class="login-badge">${ICON_SHIELD}เชื่อมต่อข้อมูลสดจาก HOSxP</span>
+        <div class="kicker" style="margin-top: 22px;">BMS Finance Control Center</div>
+        <h1 class="login-title">Unbilled Service<br/>Dashboard</h1>
+        <p class="login-sub">ระบบติดตามเงินที่ให้บริการแล้ว แต่ยังไม่ได้เรียกเก็บเงิน</p>
+        <p class="login-desc">เชื่อมต่อข้อมูลสดจากระบบ HOSxP ของโรงพยาบาลโดยตรง แสดงยอดค้างชำระ แนวโน้มรายวัน และรายการที่ต้องเร่งดำเนินการก่อนปิดบัญชี แบบเรียลไทม์</p>
+        ${loginBrandPreview()}
+      </div>
+      <div class="login-brand-foot">BMS Finance Control Center · version 1.2</div>
+    </div>
+    <div class="login-panel">
+      <div class="login-box">
+        <img src="logo.jpg" alt="BMS Finance Control Center" class="login-logo" />
+        <h2>BMS Finance Control Center</h2>
+        <div class="hint" style="margin-top: 4px;">กรุณาใส่ Session ID เพื่อเริ่มต้นใช้งาน</div>
         <form class="login-form" onsubmit="submitSessionLogin(event)">
-          <input id="session-login-input" class="login-input" type="text" placeholder="วาง Session ID ที่นี่" autocomplete="off" autocapitalize="off" spellcheck="false" />
+          <label class="login-label" for="session-login-input">Session ID</label>
+          <div class="login-input-wrap">
+            ${ICON_KEY}
+            <input id="session-login-input" class="login-input" type="text" placeholder="วาง Session ID ที่นี่" autocomplete="off" autocapitalize="off" spellcheck="false" />
+          </div>
+          ${ctx.bmsError ? `<div class="login-error">เชื่อมต่อไม่สำเร็จ: ${ctx.bmsError} — ตรวจสอบ Session ID แล้วลองอีกครั้ง</div>` : ""}
           <button type="submit" class="login-btn">เข้าสู่ระบบ</button>
         </form>
-        ${ctx.bmsError ? `<div class="login-error">เชื่อมต่อไม่สำเร็จ: ${ctx.bmsError} — ตรวจสอบ Session ID แล้วลองอีกครั้ง</div>` : ""}
         <div class="login-note">ปกติระบบจะเข้าสู่ระบบให้อัตโนมัติเมื่อเปิดผ่านปุ่ม "เปิดแอป" ใน BMS Marketplace — ใช้หน้านี้เฉพาะเมื่อเปิดลิงก์นี้โดยตรงเอง</div>
-      </section>`;
+        <div class="login-foot">© ${new Date().getFullYear()} BMS Finance Control Center · สงวนลิขสิทธิ์</div>
+      </div>
+    </div>
+  </div>`;
 }
 
 /* ---------- page ---------- */
 
 function template(vm, ctx) {
+  // The login screen is its own full-page layout (no banner, no range controls) —
+  // returned directly rather than slotted into <main> under the usual header.
+  if (ctx.showLogin) return loginScreen(ctx);
+
   // Entrance animation plays once, when real content first appears (not on every re-render).
   const animate = !ctx.skeleton && !window.__contentPainted;
   if (!ctx.skeleton) window.__contentPainted = true;
   const tabs = vm.tabs.map(t => `<button class="pill ${t.key === state.view ? "on" : ""}" onclick="setView('${t.key}')">${t.label}</button>`).join("");
-  const body = ctx.showLogin
-    ? loginScreen(ctx)
-    : ctx.skeleton
+  const body = ctx.skeleton
     ? skeleton()
     : `
       <section class="kpis">
@@ -574,7 +617,7 @@ function template(vm, ctx) {
         </div>
       </div>
       <div class="hdr-bar">
-        <div class="hdr-hospital"><div class="name">${vm.hospital}</div>${(ctx.skeleton || ctx.showLogin) ? "" : `<div class="stamp">ข้อมูล ณ ${vm.stamp}</div>`}<div class="version">version 1.2</div></div>
+        <div class="hdr-hospital"><div class="name">${vm.hospital}</div>${ctx.skeleton ? "" : `<div class="stamp">ข้อมูล ณ ${vm.stamp}</div>`}<div class="version">version 1.2</div></div>
         ${ctx.refreshing ? processingNote() : ""}
         ${rangeSeg()}
         ${state.range === "custom" ? customRangeInputs() : ""}
