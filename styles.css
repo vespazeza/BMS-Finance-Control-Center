@@ -88,8 +88,7 @@ h1, h2, h3 { font-family: Anuphan, 'IBM Plex Sans Thai', sans-serif; margin: 0; 
 .main.enter > *:nth-child(n+6) { animation-delay: 0.2s; }
 
 .hdr {
-  position: relative; overflow: hidden; background: #03060F; color: var(--hdr-text);
-  border-bottom-left-radius: 22px; border-bottom-right-radius: 22px;
+  position: relative; background: #03060F; color: var(--hdr-text);
   box-shadow: 0 14px 34px -18px rgba(3, 6, 15, 0.8);
 }
 .banner { position: relative; height: clamp(230px, 27vw, 430px); background: #03060F url("banner.jpeg") center 27% / cover no-repeat; }
@@ -98,7 +97,7 @@ h1, h2, h3 { font-family: Anuphan, 'IBM Plex Sans Thai', sans-serif; margin: 0; 
 .hdr .kicker { font-family: Orbitron, 'Exo 2', sans-serif; font-size: 12.5px; letter-spacing: 0.24em; text-transform: uppercase; color: var(--gold); font-weight: 600; text-shadow: 0 0 10px rgba(245, 185, 66, 0.45); }
 .hdr h1 { font-family: 'Exo 2', Kanit, sans-serif; font-size: 42px; font-weight: 700; margin-top: 4px; letter-spacing: 0.01em; line-height: 1.15; background: linear-gradient(180deg, #FFFFFF 20%, #9DB4DC); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 2px 8px rgba(56, 189, 248, 0.35)); }
 .hdr .sub { font-family: Kanit, 'IBM Plex Sans Thai', sans-serif; font-weight: 300; font-size: 17px; letter-spacing: 0.01em; color: #C5D2EA; margin-top: 4px; }
-.hdr-bar { position: relative; display: flex; flex-wrap: wrap; gap: 14px 18px; align-items: center; justify-content: flex-end; padding: 14px 26px; background: rgba(3, 6, 15, 0.82); border-top: 1px solid rgba(255, 255, 255, 0.08); }
+.hdr-bar { position: relative; display: flex; flex-wrap: wrap; gap: 14px 18px; align-items: center; justify-content: flex-end; padding: 14px 26px; background: rgba(3, 6, 15, 0.82); border-top: 1px solid rgba(255, 255, 255, 0.08); border-bottom-left-radius: 22px; border-bottom-right-radius: 22px; }
 .hdr-hospital { margin-right: auto; }
 .hdr-hospital .name { font-family: Kanit, 'IBM Plex Sans Thai', sans-serif; font-size: 24px; font-weight: 500; color: #F1F5F9; line-height: 1.25; }
 .hdr-hospital .stamp { font-size: 13px; color: var(--hdr-muted); margin-top: 1px; }

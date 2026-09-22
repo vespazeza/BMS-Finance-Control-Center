@@ -360,7 +360,7 @@ function deptsCard(vm) {
 
 /* ---------- drill-down (inline panel) ---------- */
 
-function drillPanel(vm) {
+function drillPanel(vm, refreshing) {
   if (!state.drillOpen) return "";
   const active = vm.focuses.find(f => f.key === state.focus) || vm.focuses[0];
   const maxAge = state.focus === "pending" ? Math.max(0, ...vm.rows.map(r => parseFloat(r.age) || 0)) : null;
@@ -398,7 +398,7 @@ function drillPanel(vm) {
             <div><div style="font-size: 11.5px; color: var(--hdr-muted);">จำนวนรายการ</div><div class="head num" style="font-size: 21px; font-weight: 600;">${vm.rowCount}</div></div>
             ${maxAge === null ? "" : `<div><div style="font-size: 11.5px; color: var(--hdr-muted);">ค้างนานสุด</div><div class="head num" style="font-size: 21px; font-weight: 600; color: var(--gold);">${maxAge.toFixed(1)} <span style="font-size: 12px; color: var(--hdr-muted); font-weight: 400;">ชม.</span></div></div>`}
           </div>
-          <div style="display: flex; flex-wrap: wrap; gap: 8px;">${focusTabs}</div>
+          <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px;">${focusTabs}${refreshing ? processingNote() : ""}</div>
         </div>
         <div style="padding: 12px 20px; background: var(--soft); border-bottom: 1px solid var(--border); display: flex; flex-wrap: wrap; gap: 8px; align-items: center;">
           <span class="hint">เรียงตาม</span>${sortBtns}
@@ -516,7 +516,7 @@ function template(vm, ctx) {
 
       ${deptsCard(vm)}
 
-      ${drillPanel(vm)}
+      ${drillPanel(vm, ctx.refreshing)}
 
       <footer class="hint" style="line-height: 1.6;">ที่มา: HOSxP — ${vm.hospital}</footer>`;
 
