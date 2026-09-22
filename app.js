@@ -573,13 +573,24 @@ function render() {
   const app = document.getElementById("app");
   const liveReady = bms.status === "connected" && !!live.hero;
   const vm = liveReady ? computeLiveViewModel() : computeViewModel();
-  // Every non-live state (no session, still connecting, or connected but the query
-  // itself failed) shows empty placeholder boxes rather than the sample-data
-  // fixture — real-looking numbers before a real connection is established have
-  // caused confusion (mistaken for the connected hospital's actual figures).
-  const skeleton = !liveReady;
+  // "idle" (opened with no session at all, e.g. the bare URL pasted directly rather
+  // than launched from the marketplace) and "error" (the last connect attempt
+  // failed) both get a login form instead of empty placeholder boxes, so someone
+  // without a marketplace launch link can still paste a session id in by hand.
+  // "connecting" (URL/cookie session already found, or just submitted via that
+  // form) keeps the loading-skeleton boxes — something is genuinely in flight.
+  const showLogin = bms.status === "idle" || bms.status === "error";
+  const skeleton = !liveReady && !showLogin;
   const bmsError = bms.status === "error" ? bms.error : (bms.status === "connected" && live.error ? live.error : null);
-  app.innerHTML = template(vm, { demo: !liveReady, skeleton, refreshing: !!live.loading && !!live.hero, bmsError });
+  app.innerHTML = template(vm, { demo: !liveReady, skeleton, showLogin, refreshing: !!live.loading && !!live.hero, bmsError });
+}
+
+function submitSessionLogin(e) {
+  e.preventDefault();
+  const input = document.getElementById("session-login-input");
+  const id = input && input.value.trim();
+  if (!id) return;
+  bmsConnect(id);
 }
 
 function setRange(k) { state.range = k; render(); refreshLiveData(); }
@@ -677,5 +688,6 @@ window.toggleCal = toggleCal;
 window.closeCal = closeCal;
 window.navCal = navCal;
 window.pickCal = pickCal;
+window.submitSessionLogin = submitSessionLogin;
 applyTheme();
 if (!initBmsSession()) render();

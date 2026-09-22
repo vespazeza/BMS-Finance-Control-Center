@@ -502,6 +502,22 @@ function skeleton() {
       </section>`;
 }
 
+/* ---------- login (no session at all, or the last session failed) ---------- */
+
+function loginScreen(ctx) {
+  return `
+      <section class="card login-card">
+        <h2>เข้าสู่ระบบด้วย Session ID</h2>
+        <div class="hint">วาง Session ID ที่ได้จาก BMS Marketplace เพื่อเชื่อมต่อกับฐานข้อมูล HOSxP ของโรงพยาบาลคุณ</div>
+        <form class="login-form" onsubmit="submitSessionLogin(event)">
+          <input id="session-login-input" class="login-input" type="text" placeholder="วาง Session ID ที่นี่" autocomplete="off" autocapitalize="off" spellcheck="false" />
+          <button type="submit" class="login-btn">เข้าสู่ระบบ</button>
+        </form>
+        ${ctx.bmsError ? `<div class="login-error">เชื่อมต่อไม่สำเร็จ: ${ctx.bmsError} — ตรวจสอบ Session ID แล้วลองอีกครั้ง</div>` : ""}
+        <div class="login-note">ปกติระบบจะเข้าสู่ระบบให้อัตโนมัติเมื่อเปิดผ่านปุ่ม "เปิดแอป" ใน BMS Marketplace — ใช้หน้านี้เฉพาะเมื่อเปิดลิงก์นี้โดยตรงเอง</div>
+      </section>`;
+}
+
 /* ---------- page ---------- */
 
 function template(vm, ctx) {
@@ -509,7 +525,9 @@ function template(vm, ctx) {
   const animate = !ctx.skeleton && !window.__contentPainted;
   if (!ctx.skeleton) window.__contentPainted = true;
   const tabs = vm.tabs.map(t => `<button class="pill ${t.key === state.view ? "on" : ""}" onclick="setView('${t.key}')">${t.label}</button>`).join("");
-  const body = ctx.skeleton
+  const body = ctx.showLogin
+    ? loginScreen(ctx)
+    : ctx.skeleton
     ? skeleton()
     : `
       <section class="kpis">
@@ -556,7 +574,7 @@ function template(vm, ctx) {
         </div>
       </div>
       <div class="hdr-bar">
-        <div class="hdr-hospital"><div class="name">${vm.hospital}</div>${ctx.skeleton ? "" : `<div class="stamp">ข้อมูล ณ ${vm.stamp}</div>`}<div class="version">version 1.2</div></div>
+        <div class="hdr-hospital"><div class="name">${vm.hospital}</div>${(ctx.skeleton || ctx.showLogin) ? "" : `<div class="stamp">ข้อมูล ณ ${vm.stamp}</div>`}<div class="version">version 1.2</div></div>
         ${ctx.refreshing ? processingNote() : ""}
         ${rangeSeg()}
         ${state.range === "custom" ? customRangeInputs() : ""}
