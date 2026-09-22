@@ -12,6 +12,7 @@ const TH_MONTHS = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
 
 const ICON_SUN = `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>`;
 const ICON_MOON = `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>`;
+const ICON_LOGOUT = `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>`;
 
 /* ---------- header controls ---------- */
 
@@ -81,6 +82,10 @@ function customRangeInputs() {
 function themeButton() {
   const dark = state.theme === "dark";
   return `<button class="iconbtn" onclick="toggleTheme()" title="${dark ? "สลับเป็นโหมดสว่าง" : "สลับเป็นโหมดมืด"}" aria-label="สลับธีม">${dark ? ICON_SUN : ICON_MOON}</button>`;
+}
+
+function logoutButton() {
+  return `<button class="iconbtn" onclick="if(confirm('ออกจากระบบ? ต้องเปิดผ่าน BMS Marketplace ใหม่ หรือใส่ Session ID เองเพื่อเข้าใช้งานอีกครั้ง')) logout()" title="ออกจากระบบ" aria-label="ออกจากระบบ">${ICON_LOGOUT}</button>`;
 }
 
 /* ---------- small building blocks ---------- */
@@ -510,11 +515,13 @@ function skeleton() {
 const ICON_SHIELD = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z"/></svg>`;
 const ICON_KEY = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="15" r="4"/><path d="M10.6 12.4 19 4m0 0h-4m4 0v4M15 8l2 2"/></svg>`;
 
+const ICON_ARROW = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>`;
+
 function loginBrandPreview() {
   const bars = [38, 62, 45, 78, 55, 90, 70];
   return `
         <div class="login-mock">
-          <div class="login-mock-dots"><span></span><span></span><span></span></div>
+          <div class="login-mock-dots"><span style="background:#FF5F57"></span><span style="background:#FEBC2E"></span><span style="background:#28C840"></span></div>
           <div class="login-mock-chips">
             <span class="login-mock-chip" style="--c: var(--red);">ยังไม่ออก Invoice</span>
             <span class="login-mock-chip" style="--c: var(--amber);">Invoice ไม่ครบยอด</span>
@@ -528,6 +535,8 @@ function loginScreen(ctx) {
   return `
   <div class="login-page">
     <div class="login-brand">
+      <div class="login-glow login-glow-a"></div>
+      <div class="login-glow login-glow-b"></div>
       <div class="login-brand-top">
         <span class="login-badge">${ICON_SHIELD}เชื่อมต่อข้อมูลสดจาก HOSxP</span>
         <div class="kicker" style="margin-top: 22px;">BMS Finance Control Center</div>
@@ -540,7 +549,7 @@ function loginScreen(ctx) {
     </div>
     <div class="login-panel">
       <div class="login-box">
-        <img src="logo.jpg" alt="BMS Finance Control Center" class="login-logo" />
+        <div class="login-logo-wrap"><img src="logo.jpg" alt="BMS Finance Control Center" class="login-logo" /></div>
         <h2>BMS Finance Control Center</h2>
         <div class="hint" style="margin-top: 4px;">กรุณาใส่ Session ID เพื่อเริ่มต้นใช้งาน</div>
         <form class="login-form" onsubmit="submitSessionLogin(event)">
@@ -550,7 +559,7 @@ function loginScreen(ctx) {
             <input id="session-login-input" class="login-input" type="text" placeholder="วาง Session ID ที่นี่" autocomplete="off" autocapitalize="off" spellcheck="false" />
           </div>
           ${ctx.bmsError ? `<div class="login-error">เชื่อมต่อไม่สำเร็จ: ${ctx.bmsError} — ตรวจสอบ Session ID แล้วลองอีกครั้ง</div>` : ""}
-          <button type="submit" class="login-btn">เข้าสู่ระบบ</button>
+          <button type="submit" class="login-btn">เข้าสู่ระบบ${ICON_ARROW}</button>
         </form>
         <div class="login-note">ปกติระบบจะเข้าสู่ระบบให้อัตโนมัติเมื่อเปิดผ่านปุ่ม "เปิดแอป" ใน BMS Marketplace — ใช้หน้านี้เฉพาะเมื่อเปิดลิงก์นี้โดยตรงเอง</div>
         <div class="login-foot">© ${new Date().getFullYear()} BMS Finance Control Center · สงวนลิขสิทธิ์</div>
@@ -622,6 +631,7 @@ function template(vm, ctx) {
         ${rangeSeg()}
         ${state.range === "custom" ? customRangeInputs() : ""}
         ${themeButton()}
+        ${ctx.connected ? logoutButton() : ""}
       </div>
     </header>
     <main class="main ${animate ? "enter" : ""}">${body}</main>

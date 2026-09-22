@@ -582,7 +582,23 @@ function render() {
   const showLogin = bms.status === "idle" || bms.status === "error";
   const skeleton = !liveReady && !showLogin;
   const bmsError = bms.status === "error" ? bms.error : (bms.status === "connected" && live.error ? live.error : null);
-  app.innerHTML = template(vm, { demo: !liveReady, skeleton, showLogin, refreshing: !!live.loading && !!live.hero, bmsError });
+  app.innerHTML = template(vm, { demo: !liveReady, skeleton, showLogin, connected: bms.status === "connected", refreshing: !!live.loading && !!live.hero, bmsError });
+}
+
+/** Clears the session (cookie + in-memory state) and drops back to the login
+ * screen — the counterpart to bmsConnect(). Live data is cleared too so a
+ * stale dashboard never flashes before the next connect. */
+function logout() {
+  window.BmsSession.removeSessionCookie();
+  bms.status = "idle";
+  bms.sessionId = null;
+  bms.config = null;
+  bms.userInfo = null;
+  bms.error = null;
+  bms.hospitalName = null;
+  bms.hospitalNameLoading = false;
+  Object.assign(live, { loading: false, error: null, hero: null, funnel: null, depts: null, rows: null, quality: null, ar: null, payers: null, arTransfer: null, trend: null });
+  render();
 }
 
 function submitSessionLogin(e) {
@@ -689,5 +705,6 @@ window.closeCal = closeCal;
 window.navCal = navCal;
 window.pickCal = pickCal;
 window.submitSessionLogin = submitSessionLogin;
+window.logout = logout;
 applyTheme();
 if (!initBmsSession()) render();
