@@ -85,10 +85,10 @@ function themeButton() {
 
 /* ---------- small building blocks ---------- */
 
-function kpi({ label, value, note, tone, onclick, hero, meter, spark }) {
+function kpi({ label, value, note, tone, onclick, hero, meter, spark, help }) {
   return `
     <div class="kpi ${hero ? "hero" : ""} ${onclick ? "clickable" : ""}" ${onclick ? `onclick="${onclick}" title="คลิกดูรายการ"` : ""} style="--tone: ${TONE[tone]};">
-      <div class="lbl">${label}</div>
+      <div class="lbl">${label}${help ? `<span class="help" title="${help}">?</span>` : ""}</div>
       <div style="display: flex; align-items: baseline; gap: 7px;">
         <span class="val head num">${value}</span>
         <span class="unit">${meter ? "%" : "บาท"}</span>
@@ -100,13 +100,28 @@ function kpi({ label, value, note, tone, onclick, hero, meter, spark }) {
     </div>`;
 }
 
+// Wording matches the HOSxP rules encoded in hosxp-queries.js (classifiedCte / buildFunnelQuery)
+// so the hover text always describes what the SQL actually counts, not an approximation of it.
+const FUNNEL_HELP = {
+  "Visit ทั้งหมด": "จำนวน Visit ผู้ป่วยนอกทั้งหมดในช่วงนี้ (ovst ที่ an ว่าง) นับตามวันที่มารับบริการ (vstdate)",
+  "Visit ที่มีค่าใช้จ่าย": "จำนวน Visit ที่มีรายการค่าใช้จ่ายเกิดขึ้นแล้ว (มีแถวใน opitemrece อย่างน้อย 1 รายการ)",
+  "Admit": "จำนวนการรับผู้ป่วยในทั้งหมดในช่วงนี้ (ipt) นับตามวันที่รับเข้า (regdate)",
+  "Discharge": "จำนวนที่จำหน่ายออกแล้ว (ipt.confirm_discharge = Y) จากผู้ป่วยที่รับเข้าในช่วงนี้",
+  "มีค่าใช้จ่าย": "จำนวนผู้ป่วยในที่ยังไม่จำหน่าย (confirm_discharge = N) แต่มีรายการค่าใช้จ่ายเกิดขึ้นแล้ว — คนละกลุ่มกับสถานะ Invoice ด้านล่าง ซึ่งนับเฉพาะรายที่จำหน่ายแล้ว",
+  "ออก Invoice แล้ว": "นับจากรายที่มีใบแจ้งหนี้ (rcpt_debt ที่ยังไม่ยกเลิก) และทุกรายการบริการถูกตัดเข้าใบแจ้งหนี้ครบแล้ว (opitemrece.finance_number ไม่ว่างทุกบรรทัด)",
+  "ยังไม่ออก Invoice": "นับจากรายที่ยังไม่มีใบแจ้งหนี้เลย (ไม่มีแถวใน rcpt_debt) · มูลค่า = ผลรวมค่าใช้จ่าย (opitemrece.sum_price) ทั้งหมดของรายนั้น",
+  "Invoice ไม่ครบยอด": "นับจากรายที่มีใบแจ้งหนี้แล้วบางส่วน แต่ยังมีรายการบริการที่ยังไม่ถูกตัดเข้าใบแจ้งหนี้ · มูลค่า = เฉพาะส่วนที่ยังไม่ถูกตัด (finance_number ว่าง)",
+  "ยกเลิก Invoice": "นับจากใบแจ้งหนี้ที่ถูกยกเลิก (rcpt_debt.status = ABORT) · มูลค่า = ยอดรวมของใบแจ้งหนี้ที่ถูกยกเลิกเหล่านั้น"
+};
+
 function funnelCard(s) {
   const tone = s.focusKey === "pending" ? "red" : s.focusKey === "partial" ? "amber" : s.focusKey === "void" ? "red" : s.label.indexOf("ออก Invoice แล้ว") >= 0 ? "teal" : "ink";
   const active = s.focusKey && s.focusKey === state.focus && state.drillOpen;
+  const help = FUNNEL_HELP[s.label];
   return `
     <div class="fcard ${s.focusKey ? "clickable" : ""} ${active ? "active" : ""}" ${s.focusKey ? `onclick="setFocus('${s.focusKey}')" title="คลิกดูรายการ"` : ""} style="--tone: ${TONE[tone]};">
       <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 8px;">
-        <span style="font-size: 12.5px; font-weight: 600;">${s.label}</span>
+        <span style="font-size: 12.5px; font-weight: 600;">${s.label}${help ? `<span class="help" title="${help}">?</span>` : ""}</span>
         <span class="num" style="font-size: 11px; color: var(--muted2);">${s.value === "—" ? "" : s.value}</span>
       </div>
       <div class="n head num">${s.count}</div>
@@ -213,15 +228,15 @@ function flowAndActions(vm) {
   const debted = at ? at.yAmt : invoiced * 0.958;
   const gap3 = at ? Math.max(0, at.amt - at.yAmt) : Math.max(0, invoiced - debted);
   const steps = [
-    { label: "1 · ให้บริการแล้ว", count: fmt(r.totalCases) + " ราย", amount: revenue, gap: 0, gapText: "ยอดตั้งต้นของช่วงนี้", neutral: true },
-    { label: "2 · เรียกเก็บแล้ว", count: fmt(at ? at.n : r.billedCases) + " ใบแจ้งหนี้", amount: at ? at.amt : invoiced, gap: r.pendingValue, gapText: `ยังไม่ออกใบแจ้งหนี้ ${baht(r.pendingValue)} บาท (${fmt(r.pendingCases)} ราย)`, sample: !at },
-    { label: "3 · ตั้งเป็นลูกหนี้", count: at ? fmt(at.yN) + " ใบลูกหนี้" : fmt(Math.round(r.billedCases * 0.968)) + " ราย", amount: debted, gap: gap3, gapText: `มีใบแจ้งหนี้แต่ยังไม่ตั้งลูกหนี้ ${baht(gap3)} บาท`, sample: !at }
+    { label: "1 · ให้บริการแล้ว", count: fmt(r.totalCases) + " ราย", amount: revenue, gap: 0, gapText: "ยอดตั้งต้นของช่วงนี้", neutral: true, help: "ยอดค่าใช้จ่ายรวม (opitemrece.sum_price) ของทุก Visit ที่มีค่าใช้จ่ายในช่วงนี้ ไม่ว่าจะออกใบแจ้งหนี้แล้วหรือไม่" },
+    { label: "2 · เรียกเก็บแล้ว", count: fmt(at ? at.n : r.billedCases) + " ใบแจ้งหนี้", amount: at ? at.amt : invoiced, gap: r.pendingValue, gapText: `ยังไม่ออกใบแจ้งหนี้ ${baht(r.pendingValue)} บาท (${fmt(r.pendingCases)} ราย)`, sample: !at, help: at ? "ยอดรวมใบแจ้งหนี้ที่ยังไม่ยกเลิก (rcpt_debt.amount) ของ Visit ในช่วงนี้" : "ประมาณจากยอดค่าใช้จ่ายรวมหักยอดที่ยังไม่ออกใบแจ้งหนี้ — ยังไม่ใช่ยอด rcpt_debt จริง (รอข้อมูลโอนลูกหนี้)" },
+    { label: "3 · ตั้งเป็นลูกหนี้", count: at ? fmt(at.yN) + " ใบลูกหนี้" : fmt(Math.round(r.billedCases * 0.968)) + " ราย", amount: debted, gap: gap3, gapText: `มีใบแจ้งหนี้แต่ยังไม่ตั้งลูกหนี้ ${baht(gap3)} บาท`, sample: !at, help: at ? "ยอดใบแจ้งหนี้ที่ถูกโอนเข้าเป็นลูกหนี้แล้ว (rcpt_debt.ar_transfer = Y)" : "ประมาณการที่ 95.8% ของยอดเรียกเก็บ — ยังไม่มีข้อมูลการโอนลูกหนี้ (ar_transfer) จริงในช่วงนี้" }
   ];
   const pct = (v) => (revenue > 0 ? Math.min(100, Math.round((v / revenue) * 100)) : 0);
   const flowRows = steps.map(f => `
         <div class="flowrow">
           <div>
-            <div style="font-size: 13.5px; font-weight: 600;">${f.label}${f.sample ? SAMPLE : ""}</div>
+            <div style="font-size: 13.5px; font-weight: 600;">${f.label}<span class="help" title="${f.help}">?</span>${f.sample ? SAMPLE : ""}</div>
             <div class="num" style="font-size: 11.5px; color: var(--muted2);">${f.count}</div>
           </div>
           <div>
@@ -235,14 +250,14 @@ function flowAndActions(vm) {
         </div>`).join("");
 
   const actions = [
-    { text: `ปิดยอดผู้รับบริการ ${fmt(r.pendingCases)} รายที่ยังไม่ออกใบแจ้งหนี้`, owner: "งานการเงิน / เวชระเบียน", amount: r.pendingValue, unit: "บาท", tone: "red" },
-    { text: `ตั้งลูกหนี้ให้ใบเรียกเก็บที่ค้างอยู่ ${at ? fmt(at.nulN) : fmt(Math.round(r.billedCases * 0.034))} ใบ`, owner: "งานบัญชีลูกหนี้", amount: at ? at.nulAmt : gap3, unit: "บาท", tone: "red", sample: !at }
+    { text: `ปิดยอดผู้รับบริการ ${fmt(r.pendingCases)} รายที่ยังไม่ออกใบแจ้งหนี้`, owner: "งานการเงิน / เวชระเบียน", amount: r.pendingValue, unit: "บาท", tone: "red", help: "เท่ากับยอด &quot;ยังไม่ออก Invoice&quot; — รายที่ยังไม่มีแถวใน rcpt_debt เลย" },
+    { text: `ตั้งลูกหนี้ให้ใบเรียกเก็บที่ค้างอยู่ ${at ? fmt(at.nulN) : fmt(Math.round(r.billedCases * 0.034))} ใบ`, owner: "งานบัญชีลูกหนี้", amount: at ? at.nulAmt : gap3, unit: "บาท", tone: "red", sample: !at, help: at ? "ใบแจ้งหนี้ที่ยังไม่ยกเลิก แต่ ar_transfer ยังไม่ใช่ Y (ยังไม่ถูกโอนเข้าเป็นลูกหนี้)" : "ประมาณการ — ยังไม่มีข้อมูลการโอนลูกหนี้ (ar_transfer) จริงในช่วงนี้" }
   ];
   const recover = actions.reduce((sum, a) => sum + a.amount, 0);
   const actionRows = actions.map(a => `
         <div class="action" style="--tone: ${TONE[a.tone]};">
           <div style="min-width: 0;">
-            <div style="font-size: 13.5px; font-weight: 500; line-height: 1.45;">${a.text}${a.sample ? SAMPLE : ""}</div>
+            <div style="font-size: 13.5px; font-weight: 500; line-height: 1.45;">${a.text}<span class="help" title="${a.help}">?</span>${a.sample ? SAMPLE : ""}</div>
             <div style="font-size: 11.5px; color: var(--muted2); margin-top: 3px;">ผู้รับผิดชอบ: ${a.owner}</div>
           </div>
           <div style="text-align: right; white-space: nowrap;">
@@ -288,9 +303,9 @@ function donut(items, total) {
 
 function miniCards(vm) {
   const r = vm.raw;
-  const cardOf = (title, body, note, sample) => `
+  const cardOf = (title, body, note, sample, help) => `
         <div class="card" style="padding: 16px 18px 16px;">
-          <div style="font-size: 13px; color: var(--muted); margin-bottom: 10px; font-weight: 500;">${title}${sample ? SAMPLE : ""}</div>
+          <div style="font-size: 13px; color: var(--muted); margin-bottom: 10px; font-weight: 500;">${title}${help ? `<span class="help" title="${help}">?</span>` : ""}${sample ? SAMPLE : ""}</div>
           ${body}
           <div style="font-size: 11.5px; color: var(--muted2); margin-top: 10px;">${note}</div>
         </div>`;
@@ -327,18 +342,23 @@ function miniCards(vm) {
 
   // data quality
   const sampleQ = !r.qualityLive;
-  const quality = [["ใบเรียกเก็บซ้ำ", fmt(r.dupCount), baht(r.dupValue)], ["ยอดไม่ตรงกับบริการ", fmt(r.mismatchCount), baht(r.mismatchValue)], ["มีบริการแต่ไม่มีใบเรียกเก็บ", fmt(r.pendingCases), baht(r.pendingValue)], ["มีลูกหนี้แต่ไม่มีใบเสร็จ", fmt(r.noReceiptCount), baht(r.noReceiptValue)]];
-  const qualityBody = `<div style="display: flex; flex-direction: column; gap: 9px;">${quality.map(([l, n, amt]) => `
+  const quality = [
+    ["ใบเรียกเก็บซ้ำ", fmt(r.dupCount), baht(r.dupValue), "VN เดียวกันมีใบแจ้งหนี้ (rcpt_debt) ที่ยังไม่ยกเลิกมากกว่า 1 ใบในวันเดียวกัน"],
+    ["ยอดไม่ตรงกับบริการ", fmt(r.mismatchCount), baht(r.mismatchValue), "ยอดใบแจ้งหนี้ (rcpt_debt.amount) ไม่เท่ากับยอดรวมรายการบริการที่ถูกตัดเข้าใบแจ้งหนี้แล้ว (opitemrece ที่มี finance_number)"],
+    ["มีบริการแต่ไม่มีใบเรียกเก็บ", fmt(r.pendingCases), baht(r.pendingValue), "เท่ากับยอด &quot;ยังไม่ออก Invoice&quot; ด้านบน — มีรายการบริการเกิดขึ้นแล้วแต่ยังไม่มีใบแจ้งหนี้เลย"],
+    ["มีลูกหนี้แต่ไม่มีใบเสร็จ", fmt(r.noReceiptCount), baht(r.noReceiptValue), "มีใบแจ้งหนี้ที่ยังไม่ยกเลิกแล้ว แต่ไม่พบใบเสร็จ (rcpt_print_detail) ของ VN นั้น"]
+  ];
+  const qualityBody = `<div style="display: flex; flex-direction: column; gap: 9px;">${quality.map(([l, n, amt, help]) => `
           <div style="display: grid; grid-template-columns: minmax(0, 1fr) 54px 86px; gap: 9px; align-items: baseline;">
-            <span style="font-size: 12.5px; color: var(--text2);">${l}</span>
+            <span style="font-size: 12.5px; color: var(--text2);">${l}${help ? `<span class="help" title="${help}">?</span>` : ""}</span>
             <span class="num" style="font-size: 12.5px; font-weight: 600; text-align: right;">${n}</span>
             <span class="num" style="font-size: 12px; text-align: right; color: var(--muted2);">${amt}</span>
           </div>`).join("")}</div>`;
 
   return `
       <section class="cards4">
-        ${cardOf("ลูกหนี้แยกตามอายุหนี้", agingBody, r.ar ? "หน่วย: บาท · นับจากวันที่เปิด visit ถึงปัจจุบัน" : "หน่วย: บาท", !r.ar)}
-        ${cardOf("สิทธิรักษามียอดค่าใช้จ่ายสูงสุด", payerBody, r.payers ? "ยอดค่าใช้จ่าย (บาท) · % = สัดส่วนของค่าใช้จ่ายรวมในช่วงที่เลือก" : "% = สัดส่วนของค่าใช้จ่ายรวม", !r.payers)}
+        ${cardOf("ลูกหนี้แยกตามอายุหนี้", agingBody, r.ar ? "หน่วย: บาท · นับจากวันที่เปิด visit ถึงปัจจุบัน" : "หน่วย: บาท", !r.ar, "อายุหนี้ = วันนี้ลบวันที่เปิด Visit (OPD: vstdate, IPD: regdate) เฉพาะใบแจ้งหนี้ที่ยังไม่ถูกยกเลิก เป็นภาพรวมล่าสุด ไม่ขึ้นกับช่วงเวลาที่เลือกด้านบน")}
+        ${cardOf("สิทธิรักษามียอดค่าใช้จ่ายสูงสุด", payerBody, r.payers ? "ยอดค่าใช้จ่าย (บาท) · % = สัดส่วนของค่าใช้จ่ายรวมในช่วงที่เลือก" : "% = สัดส่วนของค่าใช้จ่ายรวม", !r.payers, "ผลรวมค่าใช้จ่าย (opitemrece.sum_price) แยกตามสิทธิการรักษา (pttype) ของ Visit ในช่วงเวลาที่เลือก แสดง 8 อันดับแรก")}
         ${cardOf("ข้อมูลที่ต้องแก้ก่อนปิดบัญชี", qualityBody, "หน่วย: รายการ / บาท", sampleQ)}
       </section>`;
 }
@@ -353,7 +373,7 @@ function deptsCard(vm) {
         </div>`).join("");
   return `
       <section class="card">
-        <h2 style="margin-bottom: 12px;">${vm.deptTitle}</h2>
+        <h2 style="margin-bottom: 12px;">${vm.deptTitle}<span class="help" title="ยอดค้าง (opitemrece.sum_price) ของรายที่ยังไม่มีใบแจ้งหนี้เลย (state = pending) ในช่วงเวลาที่เลือก รวมตามหน่วยบริการ/หอผู้ป่วย เรียงมากไปน้อย แสดง 5 อันดับแรก">?</span></h2>
         <div style="display: flex; flex-direction: column; gap: 11px;">${rows || `<div class="hint">ไม่มีรายการค้างในช่วงนี้</div>`}</div>
       </section>`;
 }
@@ -493,10 +513,10 @@ function template(vm, ctx) {
     ? skeleton()
     : `
       <section class="kpis">
-        ${kpi({ label: "ยังไม่ออก Invoice — มูลค่ารวม", value: vm.hero.value, note: `${vm.hero.cases} ราย (${vm.hero.opdCases} OPD / ${vm.hero.ipdCases} IPD)`, tone: "red", hero: true, onclick: "setFocus('pending')", spark: sparkline(vm) })}
-        ${kpi({ label: "Invoice ไม่ครบยอด — ส่วนต่างที่ยังขาด", value: vm.hero.partialValue, note: `${vm.hero.partialCases} ใบ`, tone: "amber", onclick: "setFocus('partial')" })}
-        ${kpi({ label: "ยกเลิก Invoice (ต้องออกใหม่)", value: vm.hero.voidValue, note: `${vm.hero.voidCases} ใบ`, tone: "red", onclick: "setFocus('void')" })}
-        ${kpi({ label: "อัตราการออก Invoice", value: vm.hero.rate, note: "ของผู้รับบริการที่มีค่าใช้จ่าย · เป้า 99%", tone: "teal", meter: true })}
+        ${kpi({ label: "ยังไม่ออก Invoice — มูลค่ารวม", value: vm.hero.value, note: `${vm.hero.cases} ราย (${vm.hero.opdCases} OPD / ${vm.hero.ipdCases} IPD)`, tone: "red", hero: true, onclick: "setFocus('pending')", spark: sparkline(vm), help: "นับจากรายที่ยังไม่มีใบแจ้งหนี้เลย (ไม่มีแถวใน rcpt_debt) · มูลค่า = ผลรวมค่าใช้จ่าย (opitemrece.sum_price) ทั้งหมดของรายนั้น" })}
+        ${kpi({ label: "Invoice ไม่ครบยอด — ส่วนต่างที่ยังขาด", value: vm.hero.partialValue, note: `${vm.hero.partialCases} ใบ`, tone: "amber", onclick: "setFocus('partial')", help: "นับจากรายที่มีใบแจ้งหนี้แล้วบางส่วน แต่ยังมีรายการบริการที่ยังไม่ถูกตัดเข้าใบแจ้งหนี้ (finance_number ว่าง) · มูลค่า = เฉพาะส่วนที่ยังไม่ถูกตัด" })}
+        ${kpi({ label: "ยกเลิก Invoice (ต้องออกใหม่)", value: vm.hero.voidValue, note: `${vm.hero.voidCases} ใบ`, tone: "red", onclick: "setFocus('void')", help: "นับจากใบแจ้งหนี้ที่ถูกยกเลิก (rcpt_debt.status = ABORT) · มูลค่า = ยอดรวมของใบแจ้งหนี้ที่ถูกยกเลิกเหล่านั้น" })}
+        ${kpi({ label: "อัตราการออก Invoice", value: vm.hero.rate, note: "ของผู้รับบริการที่มีค่าใช้จ่าย · เป้า 99%", tone: "teal", meter: true, help: "สัดส่วนรายที่ออกใบแจ้งหนี้แล้ว (ครบยอดหรือบางส่วน) เทียบกับรายที่มีค่าใช้จ่ายทั้งหมดในช่วงนี้" })}
       </section>
 
       ${trendSection(vm)}

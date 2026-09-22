@@ -154,6 +154,8 @@ h1, h2, h3 { font-family: Anuphan, 'IBM Plex Sans Thai', sans-serif; margin: 0; 
 .kpi.hero .val { color: #F8FAFC; }
 .kpi .spark { position: absolute; right: 16px; bottom: 14px; }
 .kpi-hint { font-size: 12px; font-weight: 500; margin-top: 2px; }
+.help { display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; margin-left: 5px; border-radius: 999px; background: var(--track); color: var(--muted); font-size: 10px; font-weight: 700; font-style: normal; line-height: 1; cursor: help; vertical-align: middle; }
+.kpi.hero .help { background: rgba(255, 255, 255, 0.14); color: var(--hdr-muted); }
 .meter { height: 8px; background: var(--track); border-radius: 99px; overflow: hidden; margin-top: 4px; }
 .meter > i { display: block; height: 100%; border-radius: 99px; background: var(--tone); }
 
